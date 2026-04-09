@@ -61,9 +61,19 @@ function computeAlerts(
     if (!existing || log.date > existing.date) latestLog[log.productName] = log
   }
 
-  const catalogueQty: Record<string, number> = {}
+  // Build a case-insensitive lookup for catalogue quantities.
+  const catalogueQtyLower: Record<string, number> = {}
   for (const p of catalogueProducts) {
-    if (p.quantity !== null) catalogueQty[p.name] = p.quantity
+    if (p.quantity !== null) catalogueQtyLower[p.name.toLowerCase().trim()] = p.quantity
+  }
+
+  function lookupCatalogueQty(name: string): number | undefined {
+    // Exact match first, then case-insensitive, then strip trailing variant "(S)" etc.
+    const lower = name.toLowerCase().trim()
+    if (catalogueQtyLower[lower] !== undefined) return catalogueQtyLower[lower]
+    // Try stripping a trailing parenthetical variant like " (S)", " (M)", etc.
+    const base = lower.replace(/\s*\([^)]*\)\s*$/, '').trim()
+    return catalogueQtyLower[base]
   }
 
   const today = new Date()
@@ -85,7 +95,7 @@ function computeAlerts(
       lastRestockedQuantity = log.quantity
       const restockDay = startOfDay(log.date).getTime()
       const soldAfter = Object.entries(product.dailySales)
-        .filter(([key]) => new Date(key).getTime() > restockDay)
+        .filter(([key]) => startOfDay(new Date(key + 'T00:00:00')).getTime() > restockDay)
         .reduce((s, [, v]) => s + v, 0)
       const remaining = log.quantity - soldAfter
       stockRemaining = remaining
@@ -93,12 +103,14 @@ function computeAlerts(
         daysUntilStockout = remaining / dailyVelocity
         projectedStockoutDate = new Date(today.getTime() + daysUntilStockout * 86_400_000)
       }
-    } else if (catalogueQty[product.name] !== undefined) {
-      const qty = catalogueQty[product.name]
-      stockRemaining = qty
-      if (qty > 0 && dailyVelocity > 0) {
-        daysUntilStockout = qty / dailyVelocity
-        projectedStockoutDate = new Date(today.getTime() + daysUntilStockout * 86_400_000)
+    } else {
+      const qty = lookupCatalogueQty(product.name)
+      if (qty !== undefined) {
+        stockRemaining = qty
+        if (qty > 0 && dailyVelocity > 0) {
+          daysUntilStockout = qty / dailyVelocity
+          projectedStockoutDate = new Date(today.getTime() + daysUntilStockout * 86_400_000)
+        }
       }
     }
 

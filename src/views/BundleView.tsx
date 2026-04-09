@@ -278,41 +278,63 @@ export default function BundleView() {
         {pairs.length === 0 ? (
           <p className="text-sm text-gray-400">No multi-item transactions found.</p>
         ) : (
-          <div className="space-y-4">
-            {groupedPairs.map(([category, categoryPairs]) => (
-              <div key={category}>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{category}</p>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-gray-100 text-left">
-                        <th className="pb-1.5 font-semibold text-gray-500">Product A</th>
-                        <th className="pb-1.5 font-semibold text-gray-500">Product B</th>
-                        <th className="pb-1.5 font-semibold text-gray-500 text-right">Together</th>
-                        <th className="pb-1.5 font-semibold text-gray-500 text-right">Score %</th>
-                        <th className="pb-1.5 font-semibold text-gray-500 text-right">Bundle $</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categoryPairs.map(p => (
-                        <tr key={p.id} className="border-b border-gray-50">
-                          <td className="py-1.5 text-gray-800 max-w-40 truncate">{p.productA}</td>
-                          <td className="py-1.5 text-gray-800 max-w-40 truncate">{p.productB}</td>
-                          <td className="py-1.5 font-mono font-semibold text-gray-900 text-right">{p.count}</td>
-                          <td
-                            className="py-1.5 font-mono text-right"
-                            style={{ color: p.score > 20 ? '#16a34a' : p.score > 10 ? '#f97316' : '#374151' }}
-                          >
-                            {p.score.toFixed(1)}%
-                          </td>
-                          <td className="py-1.5 font-mono text-gray-400 text-right">{formatCurrency(p.suggestedPrice)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          <div className="space-y-6">
+            {groupedPairs.map(([category, categoryPairs]) => {
+              const maxCount = categoryPairs[0]?.count ?? 1
+              return (
+                <div key={category}>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">{category}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {categoryPairs.map((p, idx) => {
+                      const isTop = idx === 0 && category === groupedPairs[0][0]
+                      const strength = p.score > 20 ? 'Strong' : p.score > 10 ? 'Medium' : 'Weak'
+                      const strengthColors = {
+                        Strong: 'bg-emerald-100 text-emerald-700',
+                        Medium: 'bg-amber-100 text-amber-700',
+                        Weak: 'bg-gray-100 text-gray-500',
+                      }
+                      const barColor = p.score > 20 ? '#10b981' : p.score > 10 ? '#f59e0b' : '#9ca3af'
+                      return (
+                        <div
+                          key={p.id}
+                          className={`rounded-xl border shadow-sm p-4 flex flex-col gap-3 ${isTop ? 'border-indigo-300 bg-indigo-50' : 'border-gray-100 bg-white'}`}
+                        >
+                          {isTop && (
+                            <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Top Recommendation</p>
+                          )}
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-gray-900 truncate">{p.productA}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">+</p>
+                              <p className="font-semibold text-sm text-gray-900 truncate">{p.productB}</p>
+                            </div>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${strengthColors[strength]}`}>
+                              {strength}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-gray-400">Bought together {p.count}×</span>
+                              <span className="text-xs font-mono font-semibold" style={{ color: barColor }}>{p.score.toFixed(1)}% match</span>
+                            </div>
+                            <div className="w-full bg-gray-100 rounded-full h-1.5">
+                              <div
+                                className="rounded-full h-1.5 transition-all"
+                                style={{ width: `${Math.min(100, (p.count / maxCount) * 100)}%`, backgroundColor: barColor }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                            <span className="text-xs text-gray-400">Suggested bundle price</span>
+                            <span className="text-sm font-mono font-bold text-gray-800">{formatCurrency(p.suggestedPrice)}</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

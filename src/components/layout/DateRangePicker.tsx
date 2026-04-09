@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { subDays, subMonths, startOfMonth, endOfMonth } from 'date-fns'
+import { subDays, subMonths, startOfMonth, startOfDay, endOfMonth } from 'date-fns'
 import { useDateRangeStore } from '../../store/dateRangeStore'
 import type { DateRange } from '../../db/useTransactions'
 
@@ -11,7 +11,7 @@ interface Preset {
 function makePresets(): Preset[] {
   const now = new Date()
   return [
-    { label: 'Today', range: { start: startOfMonth(now), end: now } },
+    { label: 'Today', range: { start: startOfDay(now), end: now } },
     { label: 'Last 7 days', range: { start: subDays(now, 7), end: now } },
     { label: 'Last 30 days', range: { start: subDays(now, 30), end: now } },
     { label: 'Last 90 days', range: { start: subDays(now, 90), end: now } },

@@ -20,6 +20,7 @@ const NAV_ITEMS = [
 ]
 
 const BOTTOM_ITEMS = [
+  { label: 'Reports', path: '/reports', icon: '📄' },
   { label: 'Import Data', path: '/import', icon: '⬆️' },
   { label: 'Square Sync', path: '/square-sync', icon: '🔄' },
 ]

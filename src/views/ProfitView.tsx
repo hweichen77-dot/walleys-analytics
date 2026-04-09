@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
   ScatterChart, Scatter, PieChart, Pie, Legend,
 } from 'recharts'
-import { useFilteredTransactions, useProductCostData } from '../db/useTransactions'
+import { useFilteredTransactions, useProductCostData, useCatalogueProducts } from '../db/useTransactions'
 import { useDateRangeStore } from '../store/dateRangeStore'
 import { computeProductStats } from '../engine/analyticsEngine'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -60,6 +60,24 @@ function draftEffectiveCost(d: CostDraft): number | null {
   return isNaN(v) || v <= 0 ? null : v
 }
 
+function buildDrafts(products: { name: string }[], costData: ProductCostData[]): CostDraft[] {
+  const byName = Object.fromEntries(costData.map(c => [c.productName, c]))
+  return products.map(p => {
+    const existing = byName[p.name] ?? byName[baseName(p.name)]
+    if (existing) {
+      const isPerCase = existing.casePrice > 0 && existing.unitsPerCase > 0
+      return {
+        productName: p.name,
+        isPerCase,
+        unitCostText: isPerCase ? '' : existing.unitCost.toFixed(2),
+        casePriceText: isPerCase ? existing.casePrice.toFixed(2) : '',
+        unitsPerCaseText: isPerCase ? String(existing.unitsPerCase) : '',
+      }
+    }
+    return { productName: p.name, isPerCase: false, unitCostText: '', casePriceText: '', unitsPerCaseText: '' }
+  })
+}
+
 function CostManagementModal({
   products,
   costData,
@@ -71,65 +89,74 @@ function CostManagementModal({
 }) {
   const { show } = useToastStore()
   const [search, setSearch] = useState('')
-  const [drafts, setDrafts] = useState<CostDraft[]>(() => {
-    const byName = Object.fromEntries(costData.map(c => [c.productName, c]))
-    return products.map(p => {
-      const base = baseName(p.name)
-      const existing = byName[p.name] ?? byName[base]
-      if (existing) {
-        const isPerCase = existing.casePrice > 0 && existing.unitsPerCase > 0
-        return {
-          productName: p.name,
-          isPerCase,
-          unitCostText: isPerCase ? '' : existing.unitCost.toFixed(2),
-          casePriceText: isPerCase ? existing.casePrice.toFixed(2) : '',
-          unitsPerCaseText: isPerCase ? String(existing.unitsPerCase) : '',
-        }
-      }
-      return { productName: p.name, isPerCase: false, unitCostText: '', casePriceText: '', unitsPerCaseText: '' }
-    })
-  })
+  const [drafts, setDrafts] = useState<CostDraft[]>(() => buildDrafts(products, costData))
+
+  // Re-sync drafts if costData was [] on mount (useLiveQuery resolves asynchronously).
+  // Only runs once — after that the user owns the draft state.
+  const synced = useRef(false)
+  useEffect(() => {
+    if (!synced.current && costData.length > 0) {
+      synced.current = true
+      setDrafts(buildDrafts(products, costData))
+    }
+  }, [costData, products])
 
   async function saveAll() {
-    const byName = Object.fromEntries(costData.map(c => [c.productName, c]))
-    for (const draft of drafts) {
-      const hasData = draft.isPerCase
-        ? draft.casePriceText || draft.unitsPerCaseText
-        : draft.unitCostText
-      if (!hasData) continue
+    try {
+      // Query the DB fresh at save time so we never rely on a stale prop snapshot.
+      // This is critical: using the stale prop causes duplicate-key ConstraintErrors
+      // when multiple product variants share the same base name (e.g. "Hoodie (S)"
+      // and "Hoodie (M)" both map to "Hoodie") and the second add() would throw.
+      const currentData = await db.productCostData.toArray()
+      const freshByName = Object.fromEntries(currentData.map(c => [c.productName, c]))
 
-      const saveKey = baseName(draft.productName)
-      const existing = byName[draft.productName] ?? byName[saveKey]
-      const now = new Date()
+      // Process each unique base name only once. Multiple variants share one cost entry.
+      const processedBaseNames = new Set<string>()
 
-      if (existing?.id) {
-        if (draft.isPerCase) {
-          await db.productCostData.update(existing.id, {
-            casePrice: parseFloat(draft.casePriceText) || 0,
-            unitsPerCase: parseInt(draft.unitsPerCaseText, 10) || 0,
-            unitCost: 0,
-            lastUpdated: now,
-          })
+      for (const draft of drafts) {
+        const hasData = draft.isPerCase
+          ? draft.casePriceText.trim() || draft.unitsPerCaseText.trim()
+          : draft.unitCostText.trim()
+        if (!hasData) continue
+
+        const saveKey = baseName(draft.productName)
+        if (processedBaseNames.has(saveKey)) continue
+        processedBaseNames.add(saveKey)
+
+        const existing = freshByName[draft.productName] ?? freshByName[saveKey]
+        const now = new Date()
+
+        if (existing?.id != null) {
+          if (draft.isPerCase) {
+            await db.productCostData.update(existing.id, {
+              casePrice: parseFloat(draft.casePriceText) || 0,
+              unitsPerCase: parseInt(draft.unitsPerCaseText, 10) || 0,
+              unitCost: 0,
+              lastUpdated: now,
+            })
+          } else {
+            await db.productCostData.update(existing.id, {
+              unitCost: parseFloat(draft.unitCostText) || 0,
+              casePrice: 0,
+              unitsPerCase: 0,
+              lastUpdated: now,
+            })
+          }
         } else {
-          await db.productCostData.update(existing.id, {
-            unitCost: parseFloat(draft.unitCostText) || 0,
-            casePrice: 0,
-            unitsPerCase: 0,
+          await db.productCostData.add({
+            productName: saveKey,
+            unitCost: draft.isPerCase ? 0 : parseFloat(draft.unitCostText) || 0,
+            casePrice: draft.isPerCase ? parseFloat(draft.casePriceText) || 0 : 0,
+            unitsPerCase: draft.isPerCase ? parseInt(draft.unitsPerCaseText, 10) || 0 : 0,
             lastUpdated: now,
           })
         }
-      } else {
-        await db.productCostData.add({
-          productName: saveKey,
-          unitCost: draft.isPerCase ? 0 : parseFloat(draft.unitCostText) || 0,
-          casePrice: draft.isPerCase ? parseFloat(draft.casePriceText) || 0 : 0,
-          unitsPerCase: draft.isPerCase ? parseInt(draft.unitsPerCaseText, 10) || 0 : 0,
-          lastUpdated: now,
-        })
       }
+      show('Costs saved!', 'success')
+      onClose()
+    } catch (e) {
+      show(`Save failed: ${(e as Error).message}`, 'error')
     }
-    show('Costs saved!', 'success')
-    onClose()
   }
 
   const filtered = drafts.filter(d =>
@@ -234,6 +261,7 @@ export default function ProfitView() {
   const { range } = useDateRangeStore()
   const transactions = useFilteredTransactions(range)
   const costData = useProductCostData()
+  const catalogueProducts = useCatalogueProducts()
   const [showCostSheet, setShowCostSheet] = useState(false)
   const [sortKey, setSortKey] = useState<keyof ProfitRow>('totalProfit')
   const [sortDesc, setSortDesc] = useState(true)
@@ -241,31 +269,47 @@ export default function ProfitView() {
   const { rawStats, profitRows } = useMemo(() => {
     const stats = computeProductStats(transactions)
     const byName = Object.fromEntries(costData.map((c: ProductCostData) => [c.productName, c]))
+    // Build case-insensitive catalogue price lookup (selling price from Square).
+    const catPriceLower: Record<string, number> = {}
+    for (const cp of catalogueProducts) {
+      if (cp.price !== null && cp.price > 0) {
+        catPriceLower[cp.name.toLowerCase().trim()] = cp.price
+      }
+    }
+    function lookupCataloguePrice(name: string): number | null {
+      const lower = name.toLowerCase().trim()
+      if (catPriceLower[lower] !== undefined) return catPriceLower[lower]
+      // Try stripping trailing variant "(S)", "(M)", etc.
+      const base = lower.replace(/\s*\([^)]*\)\s*$/, '').trim()
+      return catPriceLower[base] ?? null
+    }
     function lookupCost(name: string) {
       return byName[name] ?? byName[baseName(name)]
     }
     const rows: ProfitRow[] = stats.map(p => {
       const c = lookupCost(p.name)
+      // Use catalogue price as selling price if available; fall back to derived avg price.
+      const sellingPrice = lookupCataloguePrice(p.name) ?? p.avgPrice
       if (c) {
         const euc = effectiveUnitCost(c)
-        const gp = p.avgPrice - euc
-        const margin = p.avgPrice > 0 ? (gp / p.avgPrice) * 100 : 0
+        const gp = sellingPrice - euc
+        const margin = sellingPrice > 0 ? (gp / sellingPrice) * 100 : 0
         const tc = euc * p.totalUnitsSold
         const tp = gp * p.totalUnitsSold
         return {
-          name: p.name, category: p.category, unitCost: euc, avgPrice: p.avgPrice,
+          name: p.name, category: p.category, unitCost: euc, avgPrice: sellingPrice,
           marginPercent: margin, unitsSold: p.totalUnitsSold, totalRevenue: p.totalRevenue,
           totalCost: tc, totalProfit: tp, hasCostData: true,
         }
       }
       return {
-        name: p.name, category: p.category, unitCost: null, avgPrice: p.avgPrice,
+        name: p.name, category: p.category, unitCost: null, avgPrice: sellingPrice,
         marginPercent: null, unitsSold: p.totalUnitsSold, totalRevenue: p.totalRevenue,
         totalCost: null, totalProfit: null, hasCostData: false,
       }
     })
     return { rawStats: stats, profitRows: rows }
-  }, [transactions, costData])
+  }, [transactions, costData, catalogueProducts])
 
   const sortedRows = useMemo(() => {
     return [...profitRows].sort((a, b) => {

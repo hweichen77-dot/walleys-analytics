@@ -73,9 +73,10 @@ function buildDeadStockItems(
     return { name: p.name, category: p.category, last30, prior30, lastSale }
   })
 
+  if (rawItems.length === 0) return []
   const velocities = rawItems.map(r => r.last30).sort((a, b) => a - b)
   const cutoffIdx = Math.max(0, Math.floor(velocities.length * 0.2))
-  const cutoff = velocities[cutoffIdx]
+  const cutoff = velocities[cutoffIdx] ?? 0
 
   const result: DeadStockItem[] = []
   for (const raw of rawItems) {
@@ -116,11 +117,83 @@ function buildDeadStockItems(
   return result.sort((a, b) => b.daysSinceLastSale - a.daysSinceLastSale)
 }
 
+function TierSection({
+  tier,
+  tierItems,
+}: {
+  tier: Tier
+  tierItems: DeadStockItem[]
+}) {
+  const [isExpanded, setIsExpanded] = useState(tier === 'Dead')
+  const color = tierColor(tier)
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50"
+        onClick={() => setIsExpanded(e => !e)}
+      >
+        <div className="flex items-center gap-3">
+          <span className="font-semibold" style={{ color }}>{tier}</span>
+          <span className="text-sm text-gray-400">({tierItems.length})</span>
+        </div>
+        <span className="text-xs text-gray-400">{isExpanded ? '▲' : '▼'}</span>
+      </button>
+
+      {isExpanded && (
+        <div className="border-t border-gray-100 overflow-x-auto">
+          {tierItems.length === 0 ? (
+            <p className="text-sm text-gray-400 p-5">No products in this category.</p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100 text-left">
+                  <th className="px-4 py-2 font-semibold text-gray-600">Product</th>
+                  <th className="px-4 py-2 font-semibold text-gray-600">Last Sale</th>
+                  <th className="px-4 py-2 font-semibold text-gray-600 text-right">Days Idle</th>
+                  <th className="px-4 py-2 font-semibold text-gray-600 text-right">Last 30d</th>
+                  <th className="px-4 py-2 font-semibold text-gray-600 text-right">Prior 30d</th>
+                  <th className="px-4 py-2 font-semibold text-gray-600 text-right">Trend</th>
+                  <th className="px-4 py-2 font-semibold text-gray-600 text-right">Capital</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tierItems.map(item => (
+                  <tr key={item.name} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="px-4 py-2">
+                      <div className="font-medium text-gray-900">{item.name}</div>
+                      <div className="text-gray-400">{item.category}</div>
+                    </td>
+                    <td className="px-4 py-2 text-gray-600 font-mono">{format(item.lastSaleDate, 'MMM d, yyyy')}</td>
+                    <td
+                      className="px-4 py-2 text-right font-mono font-semibold"
+                      style={{ color: item.daysSinceLastSale > 30 ? '#ef4444' : '#111827' }}
+                    >
+                      {item.daysSinceLastSale}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-700">{item.last30Units}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-700">{item.prior30Units}</td>
+                    <td className="px-4 py-2 text-right font-mono font-medium" style={{ color: item.trendPct >= 0 ? '#16a34a' : '#dc2626' }}>
+                      {item.prior30Units > 0 ? `${item.trendPct >= 0 ? '+' : ''}${item.trendPct.toFixed(0)}%` : '—'}
+                    </td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600">
+                      {item.capitalTiedUp !== null ? formatCurrency(item.capitalTiedUp) : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function DeadStockView() {
   const { range } = useDateRangeStore()
   const transactions = useFilteredTransactions(range)
   const costData = useProductCostData()
-  const [expandedTier, setExpandedTier] = useState<Tier | null>('Dead')
 
   const items = useMemo(
     () => buildDeadStockItems(transactions, costData),
@@ -139,72 +212,6 @@ export default function DeadStockView() {
 
   if (transactions.length === 0) {
     return <EmptyState title="No data" subtitle="Import transaction data to detect dead stock." />
-  }
-
-  function TierSection({ tier, tierItems }: { tier: Tier; tierItems: DeadStockItem[] }) {
-    const isExpanded = expandedTier === tier
-    const color = tierColor(tier)
-    return (
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <button
-          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50"
-          onClick={() => setExpandedTier(isExpanded ? null : tier)}
-        >
-          <div className="flex items-center gap-3">
-            <span className="font-semibold" style={{ color }}>{tier}</span>
-            <span className="text-sm text-gray-400">({tierItems.length})</span>
-          </div>
-          <span className="text-xs text-gray-400">{isExpanded ? '▲' : '▼'}</span>
-        </button>
-
-        {isExpanded && (
-          <div className="border-t border-gray-100 overflow-x-auto">
-            {tierItems.length === 0 ? (
-              <p className="text-sm text-gray-400 p-5">No products in this category.</p>
-            ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-left">
-                    <th className="px-4 py-2 font-semibold text-gray-600">Product</th>
-                    <th className="px-4 py-2 font-semibold text-gray-600">Last Sale</th>
-                    <th className="px-4 py-2 font-semibold text-gray-600 text-right">Days Idle</th>
-                    <th className="px-4 py-2 font-semibold text-gray-600 text-right">Last 30d</th>
-                    <th className="px-4 py-2 font-semibold text-gray-600 text-right">Prior 30d</th>
-                    <th className="px-4 py-2 font-semibold text-gray-600 text-right">Trend</th>
-                    <th className="px-4 py-2 font-semibold text-gray-600 text-right">Capital</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tierItems.map(item => (
-                    <tr key={item.name} className="border-b border-gray-50 hover:bg-gray-50">
-                      <td className="px-4 py-2">
-                        <div className="font-medium text-gray-900">{item.name}</div>
-                        <div className="text-gray-400">{item.category}</div>
-                      </td>
-                      <td className="px-4 py-2 text-gray-600 font-mono">{format(item.lastSaleDate, 'MMM d, yyyy')}</td>
-                      <td
-                        className="px-4 py-2 text-right font-mono font-semibold"
-                        style={{ color: item.daysSinceLastSale > 30 ? '#ef4444' : '#111827' }}
-                      >
-                        {item.daysSinceLastSale}
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono text-gray-700">{item.last30Units}</td>
-                      <td className="px-4 py-2 text-right font-mono text-gray-700">{item.prior30Units}</td>
-                      <td className="px-4 py-2 text-right font-mono font-medium" style={{ color: item.trendPct >= 0 ? '#16a34a' : '#dc2626' }}>
-                        {item.prior30Units > 0 ? `${item.trendPct >= 0 ? '+' : ''}${item.trendPct.toFixed(0)}%` : '—'}
-                      </td>
-                      <td className="px-4 py-2 text-right font-mono text-gray-600">
-                        {item.capitalTiedUp !== null ? formatCurrency(item.capitalTiedUp) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
-      </div>
-    )
   }
 
   return (

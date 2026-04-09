@@ -1,5 +1,6 @@
 import { subDays } from 'date-fns'
 import { useAuthStore } from '../store/authStore'
+import { refreshAccessToken } from './squareAuth'
 import { fetchOrders, fetchCatalogue, fetchInventory } from './squareAPIClient'
 import type { SquareOrder, SquareCatalogItem } from './squareAPIClient'
 import { upsertTransactions, upsertCatalogueProducts } from '../db/dbUtils'
@@ -48,27 +49,50 @@ function catalogueToProduct(item: SquareCatalogItem): Omit<CatalogueProduct, 'id
   const name = data.name.trim()
   if (!name) return []
 
-  const variation = data.variations?.[0]
-  const varData = variation?.item_variation_data
-  const priceCents = varData?.price_money?.amount
-  const price = priceCents != null ? priceCents / 100 : null
-
-  return [{
-    name,
-    sku: varData?.sku ?? '',
-    price,
+  const variations = data.variations ?? []
+  const common = {
     category: '',
     taxable: data.is_taxable ?? false,
     enabled: !(data.is_archived ?? false),
-    quantity: null,
+    quantity: null as number | null,
     importedAt: new Date(),
-    squareItemID: item.id,
-  }]
+  }
+
+  if (variations.length === 0) {
+    return [{ ...common, name, sku: '', price: null, squareItemID: item.id }]
+  }
+
+  // One product row per variation; squareItemID stores the variation ID for
+  // direct inventory lookup (invMap is keyed by catalog_object_id = variation ID).
+  return variations.map(variation => {
+    const varData = variation.item_variation_data
+    const priceCents = varData?.price_money?.amount
+    const variantLabel = varData?.name
+    // Only suffix name if there are multiple variants and the label isn't the
+    // generic "Regular" placeholder Square inserts for single-variant items.
+    const displayName =
+      variations.length > 1 && variantLabel && variantLabel.toLowerCase() !== 'regular'
+        ? `${name} – ${variantLabel}`
+        : name
+    return {
+      ...common,
+      name: displayName,
+      sku: varData?.sku ?? '',
+      price: priceCents != null ? priceCents / 100 : null,
+      squareItemID: variation.id,
+    }
+  })
 }
 
 export async function runSquareSync(
   onStatus: (status: SyncStatus) => void,
 ): Promise<void> {
+  // Refresh the access token if it is expired or expiring within 5 minutes.
+  const { tokenExpiresAt } = useAuthStore.getState()
+  if (tokenExpiresAt != null && tokenExpiresAt - Date.now() < 5 * 60 * 1000) {
+    await refreshAccessToken()
+  }
+
   const { accessToken, locationID, daysBack } = useAuthStore.getState()
 
   onStatus({ phase: 'orders', message: 'Fetching orders…', ordersAdded: 0, productsAdded: 0 })
@@ -91,12 +115,10 @@ export async function runSquareSync(
   const invCounts = await fetchInventory(accessToken, locationID)
   const invMap = new Map(invCounts.map(c => [c.catalog_object_id, parseInt(c.quantity, 10)]))
 
+  // product.squareItemID now holds the Square variation ID, which is the same
+  // key that invMap uses (catalog_object_id from the inventory counts endpoint).
   for (const product of products) {
-    const matchedItem = catItems.find(i => i.item_data?.name === product.name)
-    if (!matchedItem) continue
-    const variationID = matchedItem.item_data?.variations?.[0]?.id
-    if (!variationID) continue
-    const qty = invMap.get(variationID)
+    const qty = invMap.get(product.squareItemID)
     if (qty != null) product.quantity = qty
   }
   await upsertCatalogueProducts(products)

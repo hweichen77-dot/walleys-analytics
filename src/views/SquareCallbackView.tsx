@@ -18,7 +18,7 @@ export default function SquareCallbackView() {
     exchangeCodeForToken(code)
       .then(() => navigate('/square-sync'))
       .catch(e => setError((e as Error).message))
-  }, [])
+  }, [params, navigate])
 
   if (error) {
     return (

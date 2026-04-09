@@ -63,14 +63,14 @@ export default function PurchaseOrderView() {
   const overrides = useMemo(() => ({}), [])
 
   const orderItems = useMemo(
-    () => generatePurchaseOrder(transactions, events, [], overrides),
-    [transactions, events, overrides],
+    () => generatePurchaseOrder(transactions, events, [], overrides, weeksAhead),
+    [transactions, events, overrides, weeksAhead],
   )
 
   const displayItems = useMemo(() => {
     let items = orderItems.map(item => {
       const qty = qtyOverrides[item.productName] ?? item.recommendedQty
-      return { ...item, recommendedQty: qty }
+      return { ...item, recommendedQty: qty, estimatedRevenue: item.avgPrice * qty }
     })
     if (onlyNeedingReorder) {
       const catQty = Object.fromEntries(catalogueProducts.filter(p => p.quantity !== null).map(p => [p.name, p.quantity!]))

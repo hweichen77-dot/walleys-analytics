@@ -15,4 +15,18 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react':   ['react', 'react-dom', 'react-router-dom'],
+          'vendor-charts':  ['recharts'],
+          'vendor-pdf':     ['jspdf', 'jspdf-autotable'],
+          'vendor-db':      ['dexie', 'dexie-react-hooks'],
+          'vendor-parsers': ['papaparse', 'xlsx'],
+        },
+      },
+    },
+  },
 })

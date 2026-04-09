@@ -31,7 +31,8 @@ async function generatePKCE(): Promise<{ verifier: string; challenge: string }> 
 
 export function getRedirectURI(): string {
   if (isCapacitorNative() || isTauri()) return NATIVE_REDIRECT_URI
-  const base = window.location.origin + window.location.pathname.replace(/\/$/, '')
+  // Use BASE_URL (Vite config) not pathname — pathname changes per page and would break OAuth
+  const base = window.location.origin + import.meta.env.BASE_URL.replace(/\/$/, '')
   return `${base}/square/callback`
 }
 

@@ -74,11 +74,12 @@ export function productTrend(stats: ProductStats): SalesTrend {
 }
 
 export function productVelocity(stats: ProductStats): number {
-  const spanDays = Math.max(
-    (stats.lastSoldDate.getTime() - stats.firstSoldDate.getTime()) / 86_400_000 + 1,
-    7,
-  )
-  return stats.totalUnitsSold / spanDays
+  // Use the actual calendar-day span of the product's sales history divided into weeks.
+  // Minimum 1 week to avoid division-by-zero for products sold on a single day.
+  const spanDays = (stats.lastSoldDate.getTime() - stats.firstSoldDate.getTime()) / 86_400_000
+  const totalWeeks = Math.max(1, spanDays / 7)
+  // Return daily velocity (units per day) for backward compatibility with callers.
+  return (stats.totalUnitsSold / totalWeeks) / 7
 }
 
 export function isSlowMover(stats: ProductStats): boolean {

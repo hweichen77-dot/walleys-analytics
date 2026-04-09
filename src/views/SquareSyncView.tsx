@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '../store/authStore'
 import { startOAuthFlow } from '../engine/squareAuth'
 import { fetchLocations } from '../engine/squareAPIClient'
@@ -6,6 +6,8 @@ import { runSquareSync } from '../engine/squareSyncEngine'
 import type { SyncStatus } from '../engine/squareSyncEngine'
 import { useToastStore } from '../store/toastStore'
 import { formatNumber } from '../utils/format'
+
+type ConnectionState = 'disconnected' | 'connecting' | 'connected'
 
 export default function SquareSyncView() {
   const store = useAuthStore()
@@ -16,14 +18,44 @@ export default function SquareSyncView() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<{ ok: boolean; message: string; detail?: string } | null>(null)
+  const [connState, setConnState] = useState<ConnectionState>(store.accessToken ? 'connected' : 'disconnected')
 
   const isConnected = !!store.accessToken
+
+  // Keep connState in sync with the auth store (e.g. after OAuth callback sets the token)
+  useEffect(() => {
+    if (store.accessToken) {
+      setConnState('connected')
+    } else if (connState !== 'connecting') {
+      setConnState('disconnected')
+    }
+  }, [store.accessToken]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-load locations on mount whenever the user is already connected so the
+  // dropdown shows correctly after navigating away and back.
+  useEffect(() => {
+    if (store.accessToken) {
+      fetchLocations(store.accessToken)
+        .then(locs => setLocations(locs))
+        .catch(() => {})
+    }
+  }, [store.accessToken])
 
   async function handleConnect() {
     if (!appIDInput.trim()) { show('Enter your Square Application ID first', 'error'); return }
     if (!appSecretInput.trim()) { show('Enter your Square Application Secret first', 'error'); return }
     store.setCredentials({ appID: appIDInput.trim(), appSecret: appSecretInput.trim() })
-    await startOAuthFlow(appIDInput.trim())
+    setConnState('connecting')
+    try {
+      await startOAuthFlow(appIDInput.trim())
+    } catch (e) {
+      setConnState('disconnected')
+      show(`Failed to open Square login: ${(e as Error).message}`, 'error')
+    }
+  }
+
+  function handleCancelConnect() {
+    setConnState('disconnected')
   }
 
   async function handleLoadLocations() {
@@ -58,9 +90,62 @@ export default function SquareSyncView() {
     }
   }
 
+  const statusBar = {
+    disconnected: {
+      bg: 'bg-gray-100 border-gray-200',
+      dot: 'bg-gray-400',
+      text: 'text-gray-600',
+      label: 'Not connected',
+      sub: 'Enter your credentials and connect your Square account.',
+    },
+    connecting: {
+      bg: 'bg-amber-50 border-amber-200',
+      dot: null,
+      text: 'text-amber-700',
+      label: 'Connecting…',
+      sub: 'Waiting for Square OAuth authorisation. Complete sign-in in the browser window.',
+    },
+    connected: {
+      bg: 'bg-green-50 border-green-200',
+      dot: 'bg-green-500',
+      text: 'text-green-700',
+      label: `Connected${store.merchantID ? ` — ${store.merchantID}` : ''}`,
+      sub: store.locationID ? `Location selected · ready to sync` : 'Select a location to start syncing.',
+    },
+  }[connState]
+
   return (
     <div className="space-y-6 max-w-xl">
       <h1 className="text-2xl font-bold text-gray-900">Square Sync</h1>
+
+      {/* ── Status bar ── */}
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${statusBar.bg}`}>
+        {connState === 'connecting' ? (
+          <div className="w-3 h-3 shrink-0 border-2 border-amber-400 border-t-amber-700 rounded-full animate-spin" />
+        ) : (
+          <div className={`w-3 h-3 shrink-0 rounded-full ${statusBar.dot}`} />
+        )}
+        <div className="min-w-0">
+          <p className={`text-sm font-semibold ${statusBar.text}`}>{statusBar.label}</p>
+          <p className={`text-xs mt-0.5 ${statusBar.text} opacity-75`}>{statusBar.sub}</p>
+        </div>
+        {connState === 'connecting' && (
+          <button
+            onClick={handleCancelConnect}
+            className="ml-auto text-xs text-amber-700 hover:text-amber-900 underline shrink-0"
+          >
+            Cancel
+          </button>
+        )}
+        {connState === 'connected' && (
+          <button
+            onClick={() => { store.clearAuth(); setConnState('disconnected'); show('Disconnected', 'info') }}
+            className="ml-auto text-xs text-red-500 hover:text-red-700 underline shrink-0"
+          >
+            Disconnect
+          </button>
+        )}
+      </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
         <h2 className="font-semibold text-gray-800">Square Application ID</h2>
@@ -79,21 +164,22 @@ export default function SquareSyncView() {
           placeholder="sq0csp-…"
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-300"
         />
-        {!isConnected ? (
+        {!isConnected && connState !== 'connecting' && (
           <button
             onClick={handleConnect}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
           >
             Connect Square Account
           </button>
-        ) : (
+        )}
+        {connState === 'connecting' && (
           <div className="flex items-center gap-3">
-            <span className="text-green-600 font-medium text-sm">✓ Connected — {store.merchantID}</span>
+            <span className="text-sm text-amber-700 font-medium">Waiting for Square authorisation…</span>
             <button
-              onClick={() => { store.clearAuth(); show('Disconnected', 'info') }}
-              className="text-sm text-red-500 underline"
+              onClick={handleCancelConnect}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
             >
-              Disconnect
+              Cancel
             </button>
           </div>
         )}

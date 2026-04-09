@@ -1,26 +1,36 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import Sidebar from './components/layout/Sidebar'
 import { ToastContainer } from './components/ui/ToastContainer'
-import DashboardView from './views/DashboardView'
-import InventoryView from './views/InventoryView'
-import ProductDetailView from './views/ProductDetailView'
-import TimeAnalysisView from './views/TimeAnalysisView'
-import StaffView from './views/StaffView'
-import RestockView from './views/RestockView'
-import ProfitView from './views/ProfitView'
-import SeasonalView from './views/SeasonalView'
-import DeadStockView from './views/DeadStockView'
-import BundleView from './views/BundleView'
-import PriceOptimizationView from './views/PriceOptimizationView'
-import StaffShiftView from './views/StaffShiftView'
-import CustomerView from './views/CustomerView'
-import CatalogueCheckerView from './views/CatalogueCheckerView'
-import CatalogueProductsView from './views/CatalogueProductsView'
-import PurchaseOrderView from './views/PurchaseOrderView'
-import ImportView from './views/ImportView'
-import SquareSyncView from './views/SquareSyncView'
-import SquareCallbackView from './views/SquareCallbackView'
+
+const DashboardView         = lazy(() => import('./views/DashboardView'))
+const InventoryView         = lazy(() => import('./views/InventoryView'))
+const ProductDetailView     = lazy(() => import('./views/ProductDetailView'))
+const TimeAnalysisView      = lazy(() => import('./views/TimeAnalysisView'))
+const StaffView             = lazy(() => import('./views/StaffView'))
+const RestockView           = lazy(() => import('./views/RestockView'))
+const ProfitView            = lazy(() => import('./views/ProfitView'))
+const SeasonalView          = lazy(() => import('./views/SeasonalView'))
+const DeadStockView         = lazy(() => import('./views/DeadStockView'))
+const BundleView            = lazy(() => import('./views/BundleView'))
+const PriceOptimizationView = lazy(() => import('./views/PriceOptimizationView'))
+const StaffShiftView        = lazy(() => import('./views/StaffShiftView'))
+const CustomerView          = lazy(() => import('./views/CustomerView'))
+const CatalogueCheckerView  = lazy(() => import('./views/CatalogueCheckerView'))
+const CatalogueProductsView = lazy(() => import('./views/CatalogueProductsView'))
+const PurchaseOrderView     = lazy(() => import('./views/PurchaseOrderView'))
+const ImportView            = lazy(() => import('./views/ImportView'))
+const SquareSyncView        = lazy(() => import('./views/SquareSyncView'))
+const SquareCallbackView    = lazy(() => import('./views/SquareCallbackView'))
+const ReportsView           = lazy(() => import('./views/ReportsView'))
+
+function PageFallback() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
 function useDeepLinkHandler() {
   const navigate = useNavigate()
@@ -83,28 +93,31 @@ export default function App() {
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6">
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardView />} />
-            <Route path="/inventory" element={<InventoryView />} />
-            <Route path="/inventory/:productName" element={<ProductDetailView />} />
-            <Route path="/time-analysis" element={<TimeAnalysisView />} />
-            <Route path="/staff" element={<StaffView />} />
-            <Route path="/restock" element={<RestockView />} />
-            <Route path="/profit" element={<ProfitView />} />
-            <Route path="/seasonal" element={<SeasonalView />} />
-            <Route path="/dead-stock" element={<DeadStockView />} />
-            <Route path="/bundles" element={<BundleView />} />
-            <Route path="/price-optimization" element={<PriceOptimizationView />} />
-            <Route path="/staff-shift" element={<StaffShiftView />} />
-            <Route path="/customers" element={<CustomerView />} />
-            <Route path="/catalogue-checker" element={<CatalogueCheckerView />} />
-            <Route path="/catalogue-products" element={<CatalogueProductsView />} />
-            <Route path="/purchase-order" element={<PurchaseOrderView />} />
-            <Route path="/import" element={<ImportView />} />
-            <Route path="/square-sync" element={<SquareSyncView />} />
-            <Route path="/square/callback" element={<SquareCallbackView />} />
-          </Routes>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardView />} />
+              <Route path="/inventory" element={<InventoryView />} />
+              <Route path="/inventory/:productName" element={<ProductDetailView />} />
+              <Route path="/time-analysis" element={<TimeAnalysisView />} />
+              <Route path="/staff" element={<StaffView />} />
+              <Route path="/restock" element={<RestockView />} />
+              <Route path="/profit" element={<ProfitView />} />
+              <Route path="/seasonal" element={<SeasonalView />} />
+              <Route path="/dead-stock" element={<DeadStockView />} />
+              <Route path="/bundles" element={<BundleView />} />
+              <Route path="/price-optimization" element={<PriceOptimizationView />} />
+              <Route path="/staff-shift" element={<StaffShiftView />} />
+              <Route path="/customers" element={<CustomerView />} />
+              <Route path="/catalogue-checker" element={<CatalogueCheckerView />} />
+              <Route path="/catalogue-products" element={<CatalogueProductsView />} />
+              <Route path="/purchase-order" element={<PurchaseOrderView />} />
+              <Route path="/import" element={<ImportView />} />
+              <Route path="/square-sync" element={<SquareSyncView />} />
+              <Route path="/square/callback" element={<SquareCallbackView />} />
+              <Route path="/reports" element={<ReportsView />} />
+            </Routes>
+          </Suspense>
         </div>
       </main>
       <ToastContainer />

@@ -100,8 +100,12 @@ export default function PriceOptimizationView() {
   const velocityByProduct = useMemo(() => {
     const map: Record<string, number> = {}
     for (const p of productStats) {
-      const activeDays = Object.values(p.dailySales).filter(v => v > 0).length
-      map[p.name] = activeDays > 0 ? p.totalUnitsSold / activeDays : 0
+      const spanDays = Math.max(
+        (p.lastSoldDate.getTime() - p.firstSoldDate.getTime()) / 86_400_000 + 1,
+        7,
+      )
+      const calendarWeeks = spanDays / 7
+      map[p.name] = calendarWeeks > 0 ? p.totalUnitsSold / calendarWeeks : 0
     }
     return map
   }, [productStats])
@@ -121,8 +125,8 @@ export default function PriceOptimizationView() {
   const sim = selectedProduct && simPriceNum > 0 && currentPrice && currentVelocity
     ? {
         currentRevenue: currentVelocity * currentPrice,
-        estimatedUnits: Math.max(0, currentVelocity * (1 + ((simPriceNum - currentPrice) / currentPrice) * 100 * elasticity / 100)),
-        estimatedRevenue: Math.max(0, currentVelocity * (1 + ((simPriceNum - currentPrice) / currentPrice) * 100 * elasticity / 100)) * simPriceNum,
+        estimatedUnits: Math.max(0, currentVelocity * (1 + ((simPriceNum - currentPrice) / currentPrice) * elasticity)),
+        estimatedRevenue: Math.max(0, currentVelocity * (1 + ((simPriceNum - currentPrice) / currentPrice) * elasticity)) * simPriceNum,
       }
     : null
 
@@ -275,7 +279,7 @@ export default function PriceOptimizationView() {
             {sim && (
               <>
                 <div className="border-l border-gray-200 pl-6">
-                  <p className="text-xs text-gray-500">Est. Daily Revenue</p>
+                  <p className="text-xs text-gray-500">Est. Weekly Revenue</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-sm text-gray-400">{formatCurrency(sim.currentRevenue)}</span>
                     <span className="text-gray-400 text-xs">→</span>
@@ -288,7 +292,7 @@ export default function PriceOptimizationView() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Est. Daily Units</p>
+                  <p className="text-xs text-gray-500">Est. Weekly Units</p>
                   <p className="text-sm font-mono text-gray-700 mt-0.5">
                     {currentVelocity.toFixed(1)} → {sim.estimatedUnits.toFixed(1)}
                   </p>

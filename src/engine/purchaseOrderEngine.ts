@@ -13,14 +13,14 @@ export interface PurchaseOrderItem {
   reasoning: string
 }
 
-const REORDER_DAYS = 14
-
 export function generatePurchaseOrder(
   transactions: SalesTransaction[],
   events: StoreEvent[],
   _restockLogs: RestockLog[],
   overrides: Record<string, string> = {},
+  weeksAhead = 2,
 ): PurchaseOrderItem[] {
+  const reorderDays = weeksAhead * 7
   const stats = computeProductStats(transactions, overrides)
   const today = new Date()
   const items: PurchaseOrderItem[] = []
@@ -44,10 +44,10 @@ export function generatePurchaseOrder(
       else multiplier = 1.2
     }
 
-    const recommendedQty = Math.ceil(velocity * REORDER_DAYS * multiplier)
+    const recommendedQty = Math.ceil(velocity * reorderDays * multiplier)
     const estimatedRevenue = recommendedQty * product.avgPrice
 
-    let reasoning = `Based on ${velocity.toFixed(1)} units/active day`
+    let reasoning = `Based on ${velocity.toFixed(2)} units/day (calendar)`
     if (multiplier > 1) {
       reasoning += ` · ${Math.round((multiplier - 1) * 100)}% boost for upcoming event`
     }
