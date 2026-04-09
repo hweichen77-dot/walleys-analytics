@@ -10,6 +10,9 @@ const NAV_ITEMS = [
   { label: 'Profit Margins', path: '/profit', icon: '💰' },
   { label: 'Seasonal & Events', path: '/seasonal', icon: '🗓' },
   { label: 'Dead Stock', path: '/dead-stock', icon: '⚠️' },
+  { label: 'Sales Forecast', path: '/forecast', icon: '🔮' },
+  { label: 'Anomaly Alerts', path: '/anomalies', icon: '🚨' },
+  { label: 'Basket Analysis', path: '/basket-analysis', icon: '🧺' },
   { label: 'Bundle & Cross-Sell', path: '/bundles', icon: '🛍' },
   { label: 'Price Optimization', path: '/price-optimization', icon: '📈' },
   { label: 'Staff Shift Analysis', path: '/staff-shift', icon: '🏷' },
@@ -21,6 +24,7 @@ const NAV_ITEMS = [
 
 const BOTTOM_ITEMS = [
   { label: 'Reports', path: '/reports', icon: '📄' },
+  { label: 'Accountant Report', path: '/accountant-report', icon: '🧾' },
   { label: 'Import Data', path: '/import', icon: '⬆️' },
   { label: 'Square Sync', path: '/square-sync', icon: '🔄' },
 ]

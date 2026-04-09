@@ -23,6 +23,10 @@ const ImportView            = lazy(() => import('./views/ImportView'))
 const SquareSyncView        = lazy(() => import('./views/SquareSyncView'))
 const SquareCallbackView    = lazy(() => import('./views/SquareCallbackView'))
 const ReportsView           = lazy(() => import('./views/ReportsView'))
+const ForecastView          = lazy(() => import('./views/ForecastView'))
+const AnomalyView           = lazy(() => import('./views/AnomalyView'))
+const BasketAnalysisView    = lazy(() => import('./views/BasketAnalysisView'))
+const AccountantReportView  = lazy(() => import('./views/AccountantReportView'))
 
 function PageFallback() {
   return (
@@ -116,6 +120,10 @@ export default function App() {
               <Route path="/square-sync" element={<SquareSyncView />} />
               <Route path="/square/callback" element={<SquareCallbackView />} />
               <Route path="/reports" element={<ReportsView />} />
+              <Route path="/forecast" element={<ForecastView />} />
+              <Route path="/anomalies" element={<AnomalyView />} />
+              <Route path="/basket-analysis" element={<BasketAnalysisView />} />
+              <Route path="/accountant-report" element={<AccountantReportView />} />
             </Routes>
           </Suspense>
         </div>

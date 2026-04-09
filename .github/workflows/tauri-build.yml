@@ -19,7 +19,7 @@ jobs:
           - os: macos-latest
             args: '--target x86_64-apple-darwin'
           - os: windows-latest
-            args: ''
+            args: '--bundles msi'
 
     runs-on: ${{ matrix.platform.os }}
 

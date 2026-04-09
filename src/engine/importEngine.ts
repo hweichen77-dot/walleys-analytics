@@ -1,6 +1,6 @@
 import { parseCSVContent } from './csvParser'
 import { parseXLSXCatalogue } from './xlsxParser'
-import { upsertTransactions, upsertCatalogueProducts } from '../db/dbUtils'
+import { upsertTransactions, upsertCatalogueProducts, upsertProductCosts } from '../db/dbUtils'
 
 export interface ImportResult {
   added: number
@@ -20,10 +20,13 @@ export async function importCSVTransactions(file: File): Promise<ImportResult> {
 
 export async function importXLSXCatalogue(file: File): Promise<ImportResult> {
   const buffer = await file.arrayBuffer()
-  const products = parseXLSXCatalogue(buffer)
+  const { products, costs } = parseXLSXCatalogue(buffer)
   if (products.length === 0) {
     return { added: 0, total: 0, errors: ['No valid products found in XLSX.'] }
   }
   await upsertCatalogueProducts(products)
+  if (costs.length > 0) {
+    await upsertProductCosts(costs)
+  }
   return { added: products.length, total: products.length, errors: [] }
 }

@@ -750,6 +750,23 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
 
   return (
     <div className="space-y-6">
+      {report.cashTransactions === 0 && report.totalTransactions > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="font-semibold text-amber-800 mb-1">No cash transactions detected</p>
+          <p className="text-sm text-amber-700 mb-3">
+            Your data has {report.totalTransactions} transactions but none were recognized as cash.
+            The payment methods found in your data are shown below — check which one represents cash
+            and let us know so detection can be updated.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {report.paymentBreakdown.map(p => (
+              <span key={p.method} className="text-xs px-2 py-1 rounded bg-amber-100 text-amber-900 font-mono">
+                {p.method || '(empty)'} — {p.count} txns
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Cash Revenue"      value={formatCurrency(report.cashRevenue)} sub={`${report.cashRevenuePct.toFixed(1)}% of total`} />
         <StatCard label="Cash Transactions" value={formatNumber(report.cashTransactions)} sub={`${report.cashPct.toFixed(1)}% of total`} />

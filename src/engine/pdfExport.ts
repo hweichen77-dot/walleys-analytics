@@ -689,6 +689,169 @@ export function exportToPDF(report: AnyReport, dateRange: string): void {
   doc.save(`walleys-${report.type}-${format(new Date(), 'yyyy-MM-dd')}.pdf`)
 }
 
+// ─── Accountant Report ────────────────────────────────────────────────────────
+
+export interface AccountantPaymentRow {
+  method: string
+  revenue: number
+  count: number
+  pct: number
+}
+
+export interface AccountantProductRow {
+  name: string
+  revenue: number
+  units: number
+  costPerUnit: number | null
+  totalCost: number | null
+  grossProfit: number | null
+  marginPct: number | null
+}
+
+export interface AccountantReportData {
+  dateRange: string
+  totalRevenue: number
+  totalTransactions: number
+  avgTransaction: number
+  refundRevenue: number
+  refundCount: number
+  netRevenue: number
+  totalCOGS: number | null
+  grossProfit: number | null
+  grossMarginPct: number | null
+  paymentBreakdown: AccountantPaymentRow[]
+  topProducts: AccountantProductRow[]
+}
+
+export function exportAccountantPDF(data: AccountantReportData): void {
+  const doc = makeDoc()
+  const now = format(new Date(), 'MMM d, yyyy h:mm a')
+  let y = drawHeader(doc, 'Accountant Summary', data.dateRange)
+
+  // ── Section 1: Revenue ──────────────────────────────────────────────────────
+  y = drawSectionHeader(doc, '1. Revenue', y)
+
+  const hasCOGS = data.totalCOGS !== null
+  const kpiCards: { label: string; value: string; sub?: string }[] = hasCOGS
+    ? [
+        { label: 'Gross Revenue',  value: formatCurrency(data.totalRevenue) },
+        { label: 'Refunds',        value: formatCurrency(data.refundRevenue), sub: `${data.refundCount} refund(s)` },
+        { label: 'Net Revenue',    value: formatCurrency(data.netRevenue) },
+        { label: 'Gross Profit',   value: formatCurrency(data.grossProfit!), sub: `${data.grossMarginPct!.toFixed(1)}% margin` },
+      ]
+    : [
+        { label: 'Gross Revenue',    value: formatCurrency(data.totalRevenue) },
+        { label: 'Refunds',          value: formatCurrency(data.refundRevenue), sub: `${data.refundCount} refund(s)` },
+        { label: 'Net Revenue',      value: formatCurrency(data.netRevenue) },
+        { label: 'Transactions',     value: formatNumber(data.totalTransactions), sub: `avg ${formatCurrency(data.avgTransaction)}` },
+      ]
+
+  y = drawKPICards(doc, kpiCards, y)
+
+  // Revenue summary table
+  const revRows: [string, string][] = [
+    ['Gross Revenue',         formatCurrency(data.totalRevenue)],
+    ['Refunds / Adjustments', `(${formatCurrency(Math.abs(data.refundRevenue))})`],
+    ['Net Revenue',           formatCurrency(data.netRevenue)],
+    ['Total Transactions',    formatNumber(data.totalTransactions)],
+    ['Avg Transaction Value', formatCurrency(data.avgTransaction)],
+  ]
+  if (hasCOGS) {
+    revRows.push(
+      ['Cost of Goods Sold',  formatCurrency(data.totalCOGS!)],
+      ['Gross Profit',        formatCurrency(data.grossProfit!)],
+      ['Gross Margin',        `${data.grossMarginPct!.toFixed(1)}%`],
+    )
+  }
+
+  autoTable(doc, {
+    ...TABLE_STYLES,
+    startY: y,
+    body: revRows,
+    columnStyles: {
+      0: { cellWidth: 100, fontStyle: 'bold' },
+      1: { halign: 'right', cellWidth: 82 },
+    },
+  })
+  y = (doc as any).lastAutoTable.finalY + 6
+
+  // ── Section 2: Payment breakdown ────────────────────────────────────────────
+  y = drawSectionHeader(doc, '2. Payment Method Breakdown', y)
+  autoTable(doc, {
+    ...TABLE_STYLES,
+    startY: y,
+    head: [['Payment Method', 'Transactions', 'Share', 'Revenue', 'Avg Transaction']],
+    body: data.paymentBreakdown.map(p => [
+      p.method,
+      formatNumber(p.count),
+      `${p.pct.toFixed(1)}%`,
+      formatCurrency(p.revenue),
+      formatCurrency(p.count > 0 ? p.revenue / p.count : 0),
+    ]),
+    columnStyles: {
+      0: { cellWidth: 52 },
+      1: { halign: 'right', cellWidth: 32 },
+      2: { halign: 'right', cellWidth: 22 },
+      3: { halign: 'right', cellWidth: 38 },
+      4: { halign: 'right', cellWidth: 38 },
+    },
+  })
+  y = (doc as any).lastAutoTable.finalY + 6
+
+  // ── Section 3: Top products ─────────────────────────────────────────────────
+  if (y > 200) { doc.addPage(); y = drawHeader(doc, 'Accountant Summary', data.dateRange) }
+  y = drawSectionHeader(doc, '3. Top Products by Revenue', y)
+
+  const productHead = hasCOGS
+    ? [['#', 'Product', 'Revenue', 'Units', 'COGS', 'Gross Profit', 'Margin']]
+    : [['#', 'Product', 'Revenue', 'Units', 'Avg Price']]
+
+  const productBody = data.topProducts.map((p, i) =>
+    hasCOGS
+      ? [
+          i + 1, p.name,
+          formatCurrency(p.revenue),
+          formatNumber(p.units),
+          p.totalCost != null ? formatCurrency(p.totalCost) : '—',
+          p.grossProfit != null ? formatCurrency(p.grossProfit) : '—',
+          p.marginPct != null ? `${p.marginPct.toFixed(1)}%` : '—',
+        ]
+      : [
+          i + 1, p.name,
+          formatCurrency(p.revenue),
+          formatNumber(p.units),
+          formatCurrency(p.units > 0 ? p.revenue / p.units : 0),
+        ],
+  )
+
+  autoTable(doc, {
+    ...TABLE_STYLES,
+    startY: y,
+    head: productHead,
+    body: productBody,
+    columnStyles: hasCOGS
+      ? {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 62 },
+          2: { halign: 'right', cellWidth: 26 },
+          3: { halign: 'right', cellWidth: 14 },
+          4: { halign: 'right', cellWidth: 24 },
+          5: { halign: 'right', cellWidth: 24 },
+          6: { halign: 'right', cellWidth: 24 },
+        }
+      : {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 90 },
+          2: { halign: 'right', cellWidth: 34 },
+          3: { halign: 'right', cellWidth: 24 },
+          4: { halign: 'right', cellWidth: 26 },
+        },
+  })
+
+  addFooters(doc, now)
+  doc.save(`walleys-accountant-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`)
+}
+
 export function exportToCSV(report: AnyReport): void {
   let rows: (string | number)[][]
   let filename: string

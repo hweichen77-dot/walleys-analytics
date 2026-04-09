@@ -12,6 +12,7 @@ export default function ImportView() {
   const catCount = useLiveQuery(() => db.catalogueProducts.count(), []) ?? 0
   const [dragging, setDragging] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const csvRef = useRef<HTMLInputElement>(null)
   const xlsxRef = useRef<HTMLInputElement>(null)
 
@@ -50,9 +51,14 @@ export default function ImportView() {
   }
 
   async function handleClearAll() {
-    if (!confirm('Clear ALL data? This cannot be undone.')) return
-    await clearAllData()
-    show('All data cleared', 'info')
+    try {
+      await clearAllData()
+      show('All data cleared', 'info')
+    } catch (e) {
+      show(`Clear failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setConfirmClear(false)
+    }
   }
 
   return (
@@ -98,12 +104,30 @@ export default function ImportView() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <h2 className="font-semibold text-red-800 mb-1">Clear All Data</h2>
           <p className="text-sm text-red-600 mb-3">Permanently deletes all transactions, catalogue products, and settings stored locally.</p>
-          <button
-            onClick={handleClearAll}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
-          >
-            Clear everything
-          </button>
+          {confirmClear ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-red-700">Are you sure? This cannot be undone.</span>
+              <button
+                onClick={handleClearAll}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+              >
+                Yes, delete everything
+              </button>
+              <button
+                onClick={() => setConfirmClear(false)}
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmClear(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+            >
+              Clear everything
+            </button>
+          )}
         </div>
       )}
     </div>

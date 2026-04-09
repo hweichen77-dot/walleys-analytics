@@ -1,5 +1,5 @@
 import { db } from './database'
-import type { SalesTransaction, CatalogueProduct } from '../types/models'
+import type { SalesTransaction, CatalogueProduct, ProductCostData } from '../types/models'
 
 export async function upsertTransactions(transactions: Omit<SalesTransaction, 'id'>[]): Promise<number> {
   let added = 0
@@ -23,6 +23,19 @@ export async function upsertCatalogueProducts(products: Omit<CatalogueProduct, '
         await db.catalogueProducts.update(existing.id!, p)
       } else {
         await db.catalogueProducts.add(p)
+      }
+    }
+  })
+}
+
+export async function upsertProductCosts(costs: Omit<ProductCostData, 'id'>[]): Promise<void> {
+  await db.transaction('rw', db.productCostData, async () => {
+    for (const c of costs) {
+      const existing = await db.productCostData.where('productName').equals(c.productName).first()
+      if (existing) {
+        await db.productCostData.update(existing.id!, c)
+      } else {
+        await db.productCostData.add(c)
       }
     }
   })

@@ -50,7 +50,8 @@ export default function SquareSyncView() {
       await startOAuthFlow(appIDInput.trim())
     } catch (e) {
       setConnState('disconnected')
-      show(`Failed to open Square login: ${(e as Error).message}`, 'error')
+      const msg = e instanceof Error ? e.message : (typeof e === 'string' ? e : JSON.stringify(e))
+      show(`Failed to open Square login: ${msg}`, 'error')
     }
   }
 
@@ -146,6 +147,19 @@ export default function SquareSyncView() {
           </button>
         )}
       </div>
+
+      {/* ── Redirect URI notice ── */}
+      {connState !== 'connected' && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+          <p className="font-semibold mb-1">Required: add this Redirect URI in Square Developer Dashboard</p>
+          {[7329,7330,7331,7332,7333].map(p => (
+            <p key={p} className="font-mono bg-white border border-blue-200 rounded px-2 py-1 text-xs select-all mb-1">
+              http://localhost:{p}/square/callback
+            </p>
+          ))}
+          <p className="text-xs text-blue-700 mt-2">Go to developer.squareup.com → your app → OAuth → Redirect URLs → add all URLs above. The app tries each port until one is free.</p>
+        </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
         <h2 className="font-semibold text-gray-800">Square Application ID</h2>
