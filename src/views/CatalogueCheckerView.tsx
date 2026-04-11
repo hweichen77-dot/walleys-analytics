@@ -1,186 +1,311 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { useFilteredTransactions, useOverridesMap } from '../db/useTransactions'
 import { useDateRangeStore } from '../store/dateRangeStore'
 import { computeProductStats } from '../engine/analyticsEngine'
+import { auditCatalogue, type AuditIssue, type AuditSeverity } from '../engine/catalogueAuditEngine'
 import { EmptyState } from '../components/ui/EmptyState'
-import { formatCurrency } from '../utils/format'
+import { useToastStore } from '../store/toastStore'
 
-interface DiscrepancyRow {
-  name: string
-  issue: string
-  severity: 'warning' | 'info'
-  detail: string
+// ---------------------------------------------------------------------------
+// Severity styles
+// ---------------------------------------------------------------------------
+
+const SEV_STYLES: Record<AuditSeverity, { badge: string; row: string; dot: string }> = {
+  error:   { badge: 'bg-red-500/15 text-red-400 border border-red-500/30',     row: 'hover:bg-slate-700/50', dot: 'bg-red-400' },
+  warning: { badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/30', row: 'hover:bg-slate-700/50', dot: 'bg-amber-400' },
+  info:    { badge: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',   row: 'hover:bg-slate-700/50', dot: 'bg-blue-400' },
 }
+
+const SEV_LABEL: Record<AuditSeverity, string> = {
+  error: 'Error',
+  warning: 'Warning',
+  info: 'Info',
+}
+
+// ---------------------------------------------------------------------------
+// Auto-fix helpers
+// ---------------------------------------------------------------------------
+
+async function applyFix(issue: AuditIssue): Promise<void> {
+  if (!issue.productId) return
+  switch (issue.fixType) {
+    case 'set_taxable_true':
+      await db.catalogueProducts.update(issue.productId, { taxable: true })
+      break
+    case 'set_taxable_false':
+      await db.catalogueProducts.update(issue.productId, { taxable: false })
+      break
+    case 'set_quantity_zero':
+      await db.catalogueProducts.update(issue.productId, { quantity: 0 })
+      break
+    case 'set_category':
+      await db.catalogueProducts.update(issue.productId, { category: issue.fixValue as string })
+      break
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Severity filter tabs
+// ---------------------------------------------------------------------------
+
+type Filter = 'all' | AuditSeverity
 
 export default function CatalogueCheckerView() {
   const { range } = useDateRangeStore()
   const transactions = useFilteredTransactions(range)
-  const overrides = useOverridesMap()
-  const catalogue = useLiveQuery(() => db.catalogueProducts.toArray(), []) ?? []
+  const overrides    = useOverridesMap()
+  const catalogue    = useLiveQuery(() => db.catalogueProducts.toArray(), []) ?? []
+  const showToast    = useToastStore(s => s.show)
 
-  const { inSalesNotCatalogue, inCatalogueNotSales, discrepancies } = useMemo(() => {
-    const stats = computeProductStats(transactions, overrides)
-    const catNames = new Set(catalogue.map(c => c.name))
-    const saleNames = new Set(stats.map(s => s.name))
-    const inSalesNotCatalogue = stats.filter(s => !catNames.has(s.name))
-    const inCatalogueNotSales = catalogue.filter(c => c.enabled && !saleNames.has(c.name))
-    const discrepancies: DiscrepancyRow[] = []
-    for (const product of stats) {
-      const cp = catalogue.find(c => c.name === product.name)
-      if (!cp) {
-        discrepancies.push({
-          name: product.name,
-          issue: 'Not in catalogue',
-          severity: 'warning',
-          detail: `Sold ${product.totalUnitsSold} units but missing from Square catalogue`,
-        })
-      } else if (cp.price != null && Math.abs(cp.price - product.avgPrice) > 0.50) {
-        discrepancies.push({
-          name: product.name,
-          issue: 'Price mismatch',
-          severity: 'info',
-          detail: `Catalogue: $${cp.price.toFixed(2)} vs avg sold: $${product.avgPrice.toFixed(2)}`,
-        })
-      }
-    }
-    return { inSalesNotCatalogue, inCatalogueNotSales, discrepancies }
+  const [filter, setFilter] = useState<Filter>('all')
+  const [fixing, setFixing] = useState(false)
+
+  // ---------------------------------------------------------------------------
+  // Build audit result
+  // ---------------------------------------------------------------------------
+
+  const { issues, errorCount, warningCount, infoCount } = useMemo(() => {
+    const stats     = computeProductStats(transactions, overrides)
+    const salesNames = new Set(stats.map(s => s.name))
+    const avgPrices  = new Map(stats.map(s => [s.name, s.avgPrice]))
+    return auditCatalogue(catalogue, salesNames, avgPrices)
   }, [transactions, overrides, catalogue])
 
-  if (transactions.length === 0) {
-    return <EmptyState title="No transaction data" subtitle="Import sales data to check catalogue alignment." />
+  // ---------------------------------------------------------------------------
+  // Filtered view
+  // ---------------------------------------------------------------------------
+
+  const visible = useMemo(
+    () => filter === 'all' ? issues : issues.filter(i => i.severity === filter),
+    [issues, filter],
+  )
+
+  const autoFixable = issues.filter(i => i.fixType && i.productId)
+
+  // ---------------------------------------------------------------------------
+  // Fix all
+  // ---------------------------------------------------------------------------
+
+  async function fixAll() {
+    setFixing(true)
+    let fixed = 0
+    for (const issue of autoFixable) {
+      try {
+        await applyFix(issue)
+        fixed++
+      } catch {
+        // skip
+      }
+    }
+    setFixing(false)
+    showToast(`Fixed ${fixed} issue${fixed !== 1 ? 's' : ''} automatically.`, 'success')
   }
+
+  async function fixOne(issue: AuditIssue) {
+    try {
+      await applyFix(issue)
+      showToast(`Fixed: ${issue.issue} on "${issue.productName}"`, 'success')
+    } catch {
+      showToast('Fix failed — check console.', 'error')
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Empty / no-catalogue states
+  // ---------------------------------------------------------------------------
+
+  if (catalogue.length === 0) {
+    return (
+      <EmptyState
+        title="No catalogue loaded"
+        subtitle="Import a Square catalogue XLSX or sync via Square to run the audit."
+      />
+    )
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-slate-100">Catalogue Checker</h1>
-        <p className="text-sm text-slate-500 mt-1">Compare your sales data against your Square catalogue for gaps and mismatches.</p>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-100">Catalogue Checker</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Audits your catalogue for Square import errors, tax violations, and data quality issues.
+          </p>
+        </div>
+        {autoFixable.length > 0 && (
+          <button
+            onClick={fixAll}
+            disabled={fixing}
+            className="shrink-0 px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+          >
+            {fixing ? 'Fixing…' : `Fix All Auto-Fixable (${autoFixable.length})`}
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-          <p className="text-sm text-yellow-700 font-medium">Sold — Not in Catalogue</p>
-          <p className="text-3xl font-bold text-yellow-800 mt-1">{inSalesNotCatalogue.length}</p>
-          <p className="text-xs text-yellow-600 mt-1">Products you sold that Square doesn't know about</p>
-        </div>
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-          <p className="text-sm text-blue-300 font-medium">In Catalogue — Never Sold</p>
-          <p className="text-3xl font-bold text-blue-300 mt-1">{inCatalogueNotSales.length}</p>
-          <p className="text-xs text-blue-600 mt-1">Enabled catalogue items with no sales in this period</p>
-        </div>
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
-          <p className="text-sm text-orange-700 font-medium">Price Mismatches</p>
-          <p className="text-3xl font-bold text-orange-800 mt-1">{discrepancies.filter(d => d.severity === 'info').length}</p>
-          <p className="text-xs text-orange-400 mt-1">Items where catalogue price differs from avg sold price by &gt;$0.50</p>
-        </div>
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <SummaryCard
+          label="Errors"
+          count={errorCount}
+          active={filter === 'error'}
+          onClick={() => setFilter(filter === 'error' ? 'all' : 'error')}
+          color="text-red-400"
+          bg="bg-red-500/10 border-red-500/30"
+        />
+        <SummaryCard
+          label="Warnings"
+          count={warningCount}
+          active={filter === 'warning'}
+          onClick={() => setFilter(filter === 'warning' ? 'all' : 'warning')}
+          color="text-amber-400"
+          bg="bg-amber-500/10 border-amber-500/30"
+        />
+        <SummaryCard
+          label="Info"
+          count={infoCount}
+          active={filter === 'info'}
+          onClick={() => setFilter(filter === 'info' ? 'all' : 'info')}
+          color="text-blue-400"
+          bg="bg-blue-500/10 border-blue-500/30"
+        />
+        <SummaryCard
+          label="Total"
+          count={issues.length}
+          active={filter === 'all'}
+          onClick={() => setFilter('all')}
+          color="text-slate-300"
+          bg="bg-slate-700/50 border-slate-600/30"
+        />
       </div>
 
-      {inSalesNotCatalogue.length > 0 && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-700/50 flex items-center gap-2">
-            <span className="text-lg">⚠️</span>
-            <h2 className="font-semibold text-slate-200">Sold — Not in Catalogue ({inSalesNotCatalogue.length})</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-900 text-slate-500 uppercase text-xs">
-                <tr>
-                  <th className="px-4 py-2 text-left">Product</th>
-                  <th className="px-4 py-2 text-right">Units Sold</th>
-                  <th className="px-4 py-2 text-right">Revenue</th>
-                  <th className="px-4 py-2 text-right">Avg Price</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700/40">
-                {inSalesNotCatalogue.map(p => (
-                  <tr key={p.name} className="hover:bg-slate-700/50">
-                    <td className="px-4 py-2 font-medium text-slate-100">{p.name}</td>
-                    <td className="px-4 py-2 text-right text-slate-400">{p.totalUnitsSold}</td>
-                    <td className="px-4 py-2 text-right text-slate-400">{formatCurrency(p.totalRevenue)}</td>
-                    <td className="px-4 py-2 text-right text-slate-400">{formatCurrency(p.avgPrice)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* Tax rules callout */}
+      <div className="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-400">
+        <span className="text-slate-200 font-medium">Tax rules for this store: </span>
+        Only <span className="text-teal-400">ramen</span> and{' '}
+        <span className="text-teal-400">carbonated drinks</span> should be taxed.
+        All other items must be non-taxable.
+      </div>
 
-      {inCatalogueNotSales.length > 0 && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-700/50 flex items-center gap-2">
-            <span className="text-lg">📦</span>
-            <h2 className="font-semibold text-slate-200">In Catalogue — Never Sold ({inCatalogueNotSales.length})</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-900 text-slate-500 uppercase text-xs">
-                <tr>
-                  <th className="px-4 py-2 text-left">Product</th>
-                  <th className="px-4 py-2 text-left">SKU</th>
-                  <th className="px-4 py-2 text-left">Category</th>
-                  <th className="px-4 py-2 text-right">Catalogue Price</th>
-                  <th className="px-4 py-2 text-right">Stock</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700/40">
-                {inCatalogueNotSales.map(c => (
-                  <tr key={c.name} className="hover:bg-slate-700/50">
-                    <td className="px-4 py-2 font-medium text-slate-100">{c.name}</td>
-                    <td className="px-4 py-2 text-slate-500">{c.sku || '—'}</td>
-                    <td className="px-4 py-2 text-slate-500">{c.category || '—'}</td>
-                    <td className="px-4 py-2 text-right text-slate-400">{c.price != null ? formatCurrency(c.price) : '—'}</td>
-                    <td className="px-4 py-2 text-right text-slate-400">{c.quantity ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {discrepancies.filter(d => d.severity === 'info').length > 0 && (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-700/50 flex items-center gap-2">
-            <span className="text-lg">💰</span>
-            <h2 className="font-semibold text-slate-200">Price Mismatches</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-900 text-slate-500 uppercase text-xs">
-                <tr>
-                  <th className="px-4 py-2 text-left">Product</th>
-                  <th className="px-4 py-2 text-left">Detail</th>
-                  <th className="px-4 py-2 text-left">Issue</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-700/40">
-                {discrepancies.filter(d => d.severity === 'info').map((d, i) => (
-                  <tr key={i} className="hover:bg-slate-700/50">
-                    <td className="px-4 py-2 font-medium text-slate-100">{d.name}</td>
-                    <td className="px-4 py-2 text-slate-400">{d.detail}</td>
-                    <td className="px-4 py-2">
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/15 text-orange-400">
-                        {d.issue}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {inSalesNotCatalogue.length === 0 && inCatalogueNotSales.length === 0 && discrepancies.length === 0 && (
-        <div className="text-center py-12 text-slate-500">
+      {/* All-clear */}
+      {issues.length === 0 && (
+        <div className="text-center py-16 text-slate-500">
           <p className="text-4xl mb-3">✅</p>
-          <p className="font-medium">Catalogue looks clean!</p>
-          <p className="text-sm mt-1">No gaps or mismatches found in this date range.</p>
+          <p className="font-semibold text-slate-300 text-lg">Catalogue looks clean!</p>
+          <p className="text-sm mt-1">No errors, warnings, or issues found.</p>
+        </div>
+      )}
+
+      {/* Issue table */}
+      {visible.length > 0 && (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-700/50 flex items-center justify-between">
+            <h2 className="font-semibold text-slate-200 text-sm">
+              {filter === 'all' ? 'All Issues' : `${SEV_LABEL[filter]}s`}
+              <span className="ml-2 text-slate-500 font-normal">({visible.length})</span>
+            </h2>
+            {filter !== 'all' && (
+              <button
+                onClick={() => setFilter('all')}
+                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                Show all
+              </button>
+            )}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-900 text-slate-500 uppercase text-xs">
+                <tr>
+                  <th className="px-4 py-2.5 text-left w-4"></th>
+                  <th className="px-4 py-2.5 text-left">Product</th>
+                  <th className="px-4 py-2.5 text-left">Issue</th>
+                  <th className="px-4 py-2.5 text-left">Detail</th>
+                  <th className="px-4 py-2.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/40">
+                {visible.map(issue => {
+                  const styles = SEV_STYLES[issue.severity]
+                  const canFix = !!(issue.fixType && issue.productId)
+                  return (
+                    <tr key={issue.id} className={styles.row}>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-block w-2 h-2 rounded-full ${styles.dot}`} />
+                      </td>
+                      <td className="px-4 py-2.5 font-medium text-slate-100 max-w-[180px] truncate" title={issue.productName}>
+                        {issue.productName}
+                      </td>
+                      <td className="px-4 py-2.5 whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${styles.badge}`}>
+                          {issue.issue}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-400 text-xs max-w-xs">
+                        {issue.detail}
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        {canFix ? (
+                          <button
+                            onClick={() => fixOne(issue)}
+                            className="text-xs px-2.5 py-1 rounded-md bg-teal-600/20 text-teal-400 hover:bg-teal-600/40 border border-teal-500/30 transition-colors whitespace-nowrap"
+                          >
+                            Auto-fix
+                          </button>
+                        ) : (
+                          <span className="text-xs text-slate-600">Manual</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* No matches for current filter */}
+      {visible.length === 0 && issues.length > 0 && (
+        <div className="text-center py-10 text-slate-500 text-sm">
+          No {SEV_LABEL[filter as AuditSeverity]?.toLowerCase()}s found.{' '}
+          <button onClick={() => setFilter('all')} className="text-teal-400 hover:underline">Show all issues</button>
         </div>
       )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Summary card component
+// ---------------------------------------------------------------------------
+
+function SummaryCard({
+  label, count, active, onClick, color, bg,
+}: {
+  label: string
+  count: number
+  active: boolean
+  onClick: () => void
+  color: string
+  bg: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl border p-4 text-left transition-all cursor-pointer ${bg} ${
+        active ? 'ring-2 ring-teal-500/50' : 'hover:brightness-110'
+      }`}
+    >
+      <p className={`text-3xl font-bold ${color}`}>{count}</p>
+      <p className="text-xs text-slate-400 mt-1 font-medium">{label}</p>
+    </button>
   )
 }
