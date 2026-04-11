@@ -230,7 +230,7 @@ export function computeAnomalies(transactions: SalesTransaction[]): AnomalyDay[]
     if (std < 1 || mean < 1) continue
 
     const zScore = (revenue - mean) / std
-    if (Math.abs(zScore) < 1.5) continue
+    if (Math.abs(zScore) < 2.0) continue
 
     const percentDiff = ((revenue - mean) / mean) * 100
     anomalies.push({

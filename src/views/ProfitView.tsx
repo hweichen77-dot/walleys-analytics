@@ -113,11 +113,24 @@ function CostManagementModal({
       // Process each unique base name only once. Multiple variants share one cost entry.
       const processedBaseNames = new Set<string>()
 
+      let badEntries = 0
+
       for (const draft of drafts) {
         const hasData = draft.isPerCase
           ? draft.casePriceText.trim() || draft.unitsPerCaseText.trim()
           : draft.unitCostText.trim()
         if (!hasData) continue
+
+        // Validate numeric input — skip entries that have text but parse to invalid/zero values
+        if (draft.isPerCase) {
+          const cp = parseFloat(draft.casePriceText)
+          const upc = parseInt(draft.unitsPerCaseText, 10)
+          if (draft.casePriceText.trim() && (isNaN(cp) || cp <= 0)) { badEntries++; continue }
+          if (draft.unitsPerCaseText.trim() && (isNaN(upc) || upc <= 0)) { badEntries++; continue }
+        } else {
+          const uc = parseFloat(draft.unitCostText)
+          if (isNaN(uc) || uc <= 0) { badEntries++; continue }
+        }
 
         const saveKey = baseName(draft.productName)
         if (processedBaseNames.has(saveKey)) continue
@@ -152,7 +165,11 @@ function CostManagementModal({
           })
         }
       }
-      show('Costs saved!', 'success')
+      if (badEntries > 0) {
+        show(`Saved. ${badEntries} entr${badEntries === 1 ? 'y' : 'ies'} skipped — invalid values.`, 'info')
+      } else {
+        show('Costs saved!', 'success')
+      }
       onClose()
     } catch (e) {
       show(`Save failed: ${(e as Error).message}`, 'error')
@@ -439,7 +456,7 @@ export default function ProfitView() {
                   <td className="px-4 py-2 font-mono text-slate-300">{r.unitsSold}</td>
                   <td className="px-4 py-2 font-mono text-slate-300">{formatCurrency(r.totalRevenue)}</td>
                   <td className="px-4 py-2 font-mono text-slate-400">{r.totalCost !== null ? formatCurrency(r.totalCost) : '—'}</td>
-                  <td className="px-4 py-2 font-mono font-semibold" style={{ color: (r.totalProfit ?? 0) >= 0 ? '#111827' : '#dc2626' }}>
+                  <td className="px-4 py-2 font-mono font-semibold" style={{ color: (r.totalProfit ?? 0) >= 0 ? '#e2e8f0' : '#f87171' }}>
                     {r.totalProfit !== null ? formatCurrency(r.totalProfit) : '—'}
                   </td>
                 </tr>

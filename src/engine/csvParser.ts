@@ -49,7 +49,36 @@ function makeRowAccessor(row: Record<string, string>) {
   }
 }
 
-export function parseCSVContent(content: string): Omit<SalesTransaction, 'id'>[] {
+export interface CSVParseResult {
+  transactions: Omit<SalesTransaction, 'id'>[]
+  skipped: number
+  schemaError: string | null
+}
+
+const REQUIRED_COLUMN_GROUPS = [
+  {
+    name: 'date',
+    keys: ['date', 'transaction date', 'created at', 'sale date'],
+    label: 'Date / Transaction Date',
+  },
+  {
+    name: 'amount',
+    keys: ['net sales', 'net amount', 'total', 'amount', 'sale amount', 'gross sales'],
+    label: 'Net Sales / Total',
+  },
+]
+
+function detectSchemaError(headers: string[]): string | null {
+  const lower = headers.map(h => h.toLowerCase().trim())
+  for (const group of REQUIRED_COLUMN_GROUPS) {
+    if (!group.keys.some(k => lower.includes(k))) {
+      return `Missing required column "${group.label}". Is this a Square transaction export?`
+    }
+  }
+  return null
+}
+
+export function parseCSVContent(content: string): CSVParseResult {
   const result = Papa.parse<Record<string, string>>(content, {
     header: true,
     skipEmptyLines: true,
@@ -58,6 +87,17 @@ export function parseCSVContent(content: string): Omit<SalesTransaction, 'id'>[]
 
   const rows = result.data
   const transactions: Omit<SalesTransaction, 'id'>[] = []
+
+  if (rows.length === 0) {
+    return { transactions: [], skipped: 0, schemaError: 'File appears empty or has no data rows.' }
+  }
+
+  const schemaError = detectSchemaError(result.meta.fields ?? [])
+  if (schemaError) {
+    return { transactions: [], skipped: 0, schemaError }
+  }
+
+  let skipped = 0
 
   for (let i = 0; i < rows.length; i++) {
     const get = makeRowAccessor(rows[i])
@@ -107,7 +147,7 @@ export function parseCSVContent(content: string): Omit<SalesTransaction, 'id'>[]
     }
 
     const date = parseDateTime(dateStr)
-    if (!date) continue
+    if (!date) { skipped++; continue }
 
     const netSales = parseCurrency(netSalesStr)
 
@@ -123,5 +163,5 @@ export function parseCSVContent(content: string): Omit<SalesTransaction, 'id'>[]
     })
   }
 
-  return transactions
+  return { transactions, skipped, schemaError: null }
 }

@@ -20,7 +20,14 @@ export default function ImportView() {
     setImporting(true)
     try {
       const result = await importCSVTransactions(file)
-      show(`Added ${result.added} of ${result.total} transactions`, 'success')
+      if (result.errors.length > 0) {
+        show(result.errors[0], 'error')
+      } else if (result.added === 0) {
+        show('No new transactions found (all already imported).', 'info')
+      } else {
+        const skippedNote = result.skipped > 0 ? ` · ${result.skipped} rows skipped (missing date)` : ''
+        show(`Added ${result.added} of ${result.total} transactions${skippedNote}`, 'success')
+      }
     } catch (e) {
       show(`CSV import failed: ${(e as Error).message}`, 'error')
     } finally {
@@ -32,7 +39,11 @@ export default function ImportView() {
     setImporting(true)
     try {
       const result = await importXLSXCatalogue(file)
-      show(`Imported ${result.added} catalogue products`, 'success')
+      if (result.errors.length > 0) {
+        show(result.errors[0], 'error')
+      } else {
+        show(`Imported ${result.added} catalogue products`, 'success')
+      }
     } catch (e) {
       show(`XLSX import failed: ${(e as Error).message}`, 'error')
     } finally {

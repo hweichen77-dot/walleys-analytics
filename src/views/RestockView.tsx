@@ -49,10 +49,6 @@ function computeAlerts(
 ): RestockAlert[] {
   if (!transactions.length) return []
 
-  const sortedDays = Array.from(new Set(transactions.map(tx => startOfDay(tx.date).getTime()))).sort()
-  const calendarDaySpan = sortedDays.length > 1 ? (sortedDays[sortedDays.length - 1] - sortedDays[0]) / 86_400_000 : 7
-  const calendarWeeks = Math.max(calendarDaySpan / 7, 1)
-
   const stats = computeProductStats(transactions)
 
   const latestLog: Record<string, RestockLog> = {}
@@ -80,7 +76,11 @@ function computeAlerts(
   const alerts: RestockAlert[] = []
 
   for (const product of stats) {
-    const weeklyVelocity = product.totalUnitsSold / calendarWeeks
+    // Per-product span — matches analyticsEngine.productVelocity() formula.
+    // Using global dataset span would underestimate velocity for newly-introduced products.
+    const spanDays = (product.lastSoldDate.getTime() - product.firstSoldDate.getTime()) / 86_400_000
+    const weeksSpan = Math.max(1, spanDays / 7)
+    const weeklyVelocity = product.totalUnitsSold / weeksSpan
     const dailyVelocity = weeklyVelocity / 7
 
     let stockRemaining: number | null = null
