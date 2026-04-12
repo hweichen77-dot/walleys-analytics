@@ -67,15 +67,10 @@ export function exportCatalogueToXLSX(
   // We store items as flat CatalogueProduct entries (already variation-expanded
   // from the parser), so each product → one row.
   const rows: (string | number)[][] = products.map(p => {
-    // Parse variation name back out of "Base Name (Variation)" format
-    const variationMatch = p.name.match(/^(.+)\s+\((.+)\)$/)
-    const itemName    = variationMatch ? variationMatch[1] : p.name
-    const variation   = variationMatch ? variationMatch[2] : 'Regular'
-
     return [
       p.squareItemID ?? '',                 // Token
-      itemName,                             // Item Name
-      variation,                            // Variation Name
+      p.itemName || p.name,                 // Item Name
+      p.variationName || 'Regular',         // Variation Name
       p.sku ?? '',                          // SKU
       '',                                   // Description (not stored locally)
       '',                                   // GTIN

@@ -8,6 +8,7 @@ import type {
   ProductBundle,
   CatalogueProduct,
 } from '../types/models'
+import { splitItemVariation } from '../types/models'
 
 class WalleysDB extends Dexie {
   salesTransactions!: Dexie.Table<SalesTransaction, number>
@@ -28,6 +29,25 @@ class WalleysDB extends Dexie {
       storeEvents: '++id, startDate, endDate',
       productBundles: '++id, name',
       catalogueProducts: '++id, &name, sku, category, enabled',
+    })
+
+    // Version 3: add itemName + variationName fields to catalogueProducts
+    this.version(3).stores({
+      salesTransactions: '++id, &transactionID, date, staffName, paymentMethod, dayOfWeek, hour',
+      categoryOverrides: '++id, &productName',
+      restockLogs: '++id, productName, date',
+      productCostData: '++id, &productName',
+      storeEvents: '++id, startDate, endDate',
+      productBundles: '++id, name',
+      catalogueProducts: '++id, &name, itemName, variationName, sku, category, enabled',
+    }).upgrade(async tx => {
+      await tx.table('catalogueProducts').toCollection().modify((p: any) => {
+        if (!p.itemName || !p.variationName) {
+          const { itemName, variationName } = splitItemVariation(p.name ?? '')
+          p.itemName = itemName
+          p.variationName = variationName
+        }
+      })
     })
 
     // Version 2: retroactively normalize paymentMethod for cash transactions.

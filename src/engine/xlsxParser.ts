@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx'
 import type { CatalogueProduct, ProductCostData } from '../types/models'
+import { splitItemVariation } from '../types/models'
 
 function colIndex(header: string[]): (keywords: string[]) => number | null {
   return (keywords) => {
@@ -94,8 +95,12 @@ export function parseXLSXCatalogue(buffer: ArrayBuffer): XLSXCatalogueResult {
     const quantity = quantityIdx !== null ? parseQuantity(row[quantityIdx]) : null
     const unitCost = unitCostIdx !== null ? parsePrice(row[unitCostIdx]) : null
 
+    const { itemName, variationName } = splitItemVariation(name)
+
     products.push({
       name,
+      itemName,
+      variationName,
       sku: sku || token,
       price,
       category,

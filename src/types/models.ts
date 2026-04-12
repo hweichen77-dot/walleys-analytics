@@ -55,7 +55,12 @@ export interface ProductBundle {
 
 export interface CatalogueProduct {
   id?: number
+  /** Full composite name: "Item Name (Variation)" — kept for backwards-compat with sales matching */
   name: string
+  /** Parent item name — "Ramune Soda" (without variation) */
+  itemName: string
+  /** Variation label — "Strawberry", "Regular", etc. */
+  variationName: string
   sku: string
   price: number | null
   category: string
@@ -64,6 +69,13 @@ export interface CatalogueProduct {
   quantity: number | null
   importedAt: Date
   squareItemID: string
+}
+
+/** Parse any product name into { itemName, variationName } */
+export function splitItemVariation(name: string): { itemName: string; variationName: string } {
+  const match = name.match(/^(.+)\s+\((.+)\)$/)
+  if (match) return { itemName: match[1].trim(), variationName: match[2].trim() }
+  return { itemName: name.trim(), variationName: 'Regular' }
 }
 
 export interface ProductItem {

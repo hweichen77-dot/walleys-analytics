@@ -5,7 +5,7 @@ import { fetchOrders, fetchCatalogue, fetchInventory } from './squareAPIClient'
 import type { SquareOrder, SquareCatalogItem } from './squareAPIClient'
 import { upsertTransactions, upsertCatalogueProducts } from '../db/dbUtils'
 import type { SalesTransaction, CatalogueProduct } from '../types/models'
-import { parseProductItems } from '../types/models'
+import { parseProductItems, splitItemVariation } from '../types/models'
 
 export interface SyncStatus {
   phase: 'idle' | 'orders' | 'catalogue' | 'inventory' | 'done' | 'error'
@@ -59,7 +59,7 @@ function catalogueToProduct(item: SquareCatalogItem): Omit<CatalogueProduct, 'id
   }
 
   if (variations.length === 0) {
-    return [{ ...common, name, sku: '', price: null, squareItemID: item.id }]
+    return [{ ...common, name, itemName: name, variationName: 'Regular', sku: '', price: null, squareItemID: item.id }]
   }
 
   // One product row per variation; squareItemID stores the variation ID for
@@ -67,16 +67,18 @@ function catalogueToProduct(item: SquareCatalogItem): Omit<CatalogueProduct, 'id
   return variations.map(variation => {
     const varData = variation.item_variation_data
     const priceCents = varData?.price_money?.amount
-    const variantLabel = varData?.name
-    // Only suffix name if there are multiple variants and the label isn't the
-    // generic "Regular" placeholder Square inserts for single-variant items.
-    const displayName =
-      variations.length > 1 && variantLabel && variantLabel.toLowerCase() !== 'regular'
-        ? `${name} – ${variantLabel}`
-        : name
+    const variantLabel = varData?.name ?? 'Regular'
+    const variationName = variantLabel.toLowerCase() === 'regular' || variations.length === 1
+      ? 'Regular'
+      : variantLabel
+    // Only suffix name if there are multiple variants and the label isn't "Regular"
+    const displayName = variationName !== 'Regular' ? `${name} (${variationName})` : name
+    const { itemName } = splitItemVariation(displayName)
     return {
       ...common,
       name: displayName,
+      itemName,
+      variationName,
       sku: varData?.sku ?? '',
       price: priceCents != null ? priceCents / 100 : null,
       squareItemID: variation.id,

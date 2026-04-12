@@ -9,29 +9,125 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { CategoryBadge } from '../components/ui/Badge'
 import { formatCurrency, formatNumber } from '../utils/format'
 import { useToastStore } from '../store/toastStore'
+import { splitItemVariation } from '../types/models'
+import type { ProductStats } from '../engine/analyticsEngine'
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+interface ItemGroup {
+  itemName: string
+  variations: ProductStats[]
+  totalUnits: number
+  totalRevenue: number
+  avgMarketPrice: number
+  category: string
+  trend: 'Growing' | 'Declining' | 'Stable'
+  hasSlow: boolean
+}
+
+function parseTrend(p: ProductStats): 'Growing' | 'Declining' | 'Stable' {
+  return productTrend(p) as 'Growing' | 'Declining' | 'Stable'
+}
+
+function groupStats(stats: ProductStats[]): ItemGroup[] {
+  const map = new Map<string, ProductStats[]>()
+  for (const p of stats) {
+    const { itemName } = splitItemVariation(p.name)
+    if (!map.has(itemName)) map.set(itemName, [])
+    map.get(itemName)!.push(p)
+  }
+  return Array.from(map.entries()).map(([itemName, vars]) => {
+    const totalUnits   = vars.reduce((s, v) => s + v.totalUnitsSold, 0)
+    const totalRevenue = vars.reduce((s, v) => s + v.totalRevenue, 0)
+    const avgMarketPrice = totalUnits > 0 ? totalRevenue / totalUnits : 0
+    const trends = vars.map(v => parseTrend(v))
+    const trend: ItemGroup['trend'] = trends.includes('Growing') ? 'Growing'
+      : trends.includes('Declining') ? 'Declining' : 'Stable'
+    return {
+      itemName,
+      variations: vars,
+      totalUnits,
+      totalRevenue,
+      avgMarketPrice,
+      category: vars[0]?.category ?? '',
+      trend,
+      hasSlow: vars.some(v => isSlowMover(v)),
+    }
+  }).sort((a, b) => b.totalRevenue - a.totalRevenue)
+}
+
+// ---------------------------------------------------------------------------
+// Trend badge
+// ---------------------------------------------------------------------------
+function TrendBadge({ trend }: { trend: ItemGroup['trend'] }) {
+  if (trend === 'Growing') return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 15l-6-6-6 6" /></svg>
+      Up
+    </span>
+  )
+  if (trend === 'Declining') return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-400">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 9l6 6 6-6" /></svg>
+      Down
+    </span>
+  )
+  return <span className="text-xs text-slate-500">→</span>
+}
+
+// ---------------------------------------------------------------------------
+// Chevron
+// ---------------------------------------------------------------------------
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="13" height="13" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+      className={`transition-transform duration-200 shrink-0 text-slate-500 ${open ? 'rotate-90' : ''}`}
+    >
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Main view
+// ---------------------------------------------------------------------------
 export default function InventoryView() {
-  const { range } = useDateRangeStore()
-  const transactions = useFilteredTransactions(range)
-  const overridesMap = useOverridesMap()
-  const overrides = useCategoryOverrides()
-  const navigate = useNavigate()
-  const { show } = useToastStore()
-  const [search, setSearch] = useState('')
+  const { range }     = useDateRangeStore()
+  const transactions  = useFilteredTransactions(range)
+  const overridesMap  = useOverridesMap()
+  const overrides     = useCategoryOverrides()
+  const navigate      = useNavigate()
+  const { show }      = useToastStore()
+
+  const [search, setSearch]           = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; name: string } | null>(null)
+  const [expandedItems, setExpandedItems]   = useState<Set<string>>(new Set())
+  const [ctxMenu, setCtxMenu]         = useState<{ x: number; y: number; name: string } | null>(null)
 
   const stats = useMemo(() => computeProductStats(transactions, overridesMap), [transactions, overridesMap])
 
-  const filtered = useMemo(() => {
+  const itemGroups = useMemo(() => groupStats(stats), [stats])
+
+  const filteredGroups = useMemo(() => {
     const q = search.toLowerCase()
-    return stats.filter(p => {
-      if (categoryFilter !== 'All' && p.category !== categoryFilter) return false
-      if (q && !p.name.toLowerCase().includes(q)) return false
+    return itemGroups.filter(g => {
+      if (categoryFilter !== 'All' && g.category !== categoryFilter) return false
+      if (q && !g.itemName.toLowerCase().includes(q) && !g.variations.some(v => v.name.toLowerCase().includes(q))) return false
       return true
     })
-  }, [stats, search, categoryFilter])
+  }, [itemGroups, search, categoryFilter])
 
+  // -- Summary stats ----------------------------------------------------------
+  const topItem       = itemGroups[0]
+  const totalRevenue  = stats.reduce((s, p) => s + p.totalRevenue, 0)
+  const totalUnits    = stats.reduce((s, p) => s + p.totalUnitsSold, 0)
+  const growingCount  = itemGroups.filter(g => g.trend === 'Growing').length
+  const slowCount     = stats.filter(p => isSlowMover(p)).length
+
+  // -- Category override -------------------------------------------------------
   async function setOverride(productName: string, category: string) {
     const existing = overrides.find((o: { productName: string }) => o.productName === productName)
     if (existing) await db.categoryOverrides.update(existing.id!, { category })
@@ -40,15 +136,55 @@ export default function InventoryView() {
     setCtxMenu(null)
   }
 
+  // -- Expand/collapse --------------------------------------------------------
+  function toggleExpand(itemName: string) {
+    setExpandedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(itemName)) next.delete(itemName)
+      else next.add(itemName)
+      return next
+    })
+  }
+
   if (transactions.length === 0) {
     return <EmptyState title="No transaction data" subtitle="Import sales data to see your inventory analytics." />
   }
 
   return (
-    <div className="space-y-4" onClick={() => setCtxMenu(null)}>
+    <div className="space-y-5" onClick={() => setCtxMenu(null)}>
       <h1 className="text-xl font-bold text-slate-100">Transactions</h1>
 
-      <div className="flex flex-wrap gap-3">
+      {/* Summary strip — fills dead space */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
+          <p className="text-xl font-bold text-teal-400">{formatCurrency(totalRevenue)}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Total revenue</p>
+        </div>
+        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
+          <p className="text-xl font-bold text-slate-200">{formatNumber(totalUnits)}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Units sold</p>
+        </div>
+        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
+          <p className="text-xl font-bold text-emerald-400">{growingCount}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Growing items</p>
+        </div>
+        <div className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
+          {topItem ? (
+            <>
+              <p className="text-sm font-semibold text-slate-100 truncate">{topItem.itemName}</p>
+              <p className="text-xs text-slate-500 mt-0.5">Top seller · {formatCurrency(topItem.totalRevenue)}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xl font-bold text-orange-400">{slowCount}</p>
+              <p className="text-xs text-slate-500 mt-0.5">Slow movers</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
         <input
           type="text"
           placeholder="Search product…"
@@ -59,19 +195,23 @@ export default function InventoryView() {
         <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
-          className="border border-slate-600 rounded-lg px-3 py-2 bg-slate-700/50 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+          className="border border-slate-600 rounded-lg px-3 py-2 bg-slate-700/50 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 cursor-pointer"
         >
           <option value="All">All categories</option>
           {ALL_CATEGORY_NAMES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
-        <span className="text-sm text-slate-500 self-center">{filtered.length} products</span>
+        <span className="text-sm text-slate-500 self-center">
+          {filteredGroups.length} items · {filteredGroups.reduce((s, g) => s + g.variations.length, 0)} variations
+        </span>
       </div>
 
+      {/* Table */}
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-900 text-slate-500 uppercase text-xs">
+            <thead className="bg-slate-900 text-slate-500 uppercase text-xs border-b border-slate-700/60">
               <tr>
+                <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3 text-left">Product</th>
                 <th className="px-4 py-3 text-left">Category</th>
                 <th className="px-4 py-3 text-right">Units</th>
@@ -80,52 +220,106 @@ export default function InventoryView() {
                 <th className="px-4 py-3 text-center">Trend</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/40">
-              {filtered.map(p => {
-                const trend = productTrend(p)
-                const slow = isSlowMover(p)
+            <tbody>
+              {filteredGroups.map(group => {
+                const isOpen    = expandedItems.has(group.itemName)
+                const multiVar  = group.variations.length > 1
+
                 return (
-                  <tr
-                    key={p.name}
-                    className="hover:bg-slate-700/50 cursor-pointer"
-                    onClick={() => navigate(`/inventory/${encodeURIComponent(p.name)}`)}
-                    onContextMenu={e => { e.preventDefault(); setCtxMenu({ x: e.clientX, y: e.clientY, name: p.name }) }}
-                  >
-                    <td className="px-4 py-3 font-medium text-slate-100">
-                      {p.name}
-                      {slow && <span className="ml-2 text-xs text-orange-400">slow</span>}
-                    </td>
-                    <td className="px-4 py-3"><CategoryBadge category={p.category} /></td>
-                    <td className="px-4 py-3 text-right text-slate-400">{formatNumber(p.totalUnitsSold)}</td>
-                    <td className="px-4 py-3 text-right text-slate-300 font-medium">{formatCurrency(p.totalRevenue)}</td>
-                    <td className="px-4 py-3 text-right text-slate-400">{formatCurrency(p.avgPrice)}</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={trend === 'Growing' ? 'text-emerald-400' : trend === 'Declining' ? 'text-red-400' : 'text-slate-500'}>
-                        {trend === 'Growing' ? '↑' : trend === 'Declining' ? '↓' : '→'}
-                      </span>
-                    </td>
-                  </tr>
+                  <>
+                    {/* ── Item row ── */}
+                    <tr
+                      key={`item-${group.itemName}`}
+                      className={`border-b border-slate-700/30 transition-colors ${
+                        multiVar ? 'cursor-pointer hover:bg-slate-700/40' : 'cursor-pointer hover:bg-slate-700/30'
+                      } ${isOpen ? 'bg-slate-700/20' : ''}`}
+                      onClick={() => {
+                        if (multiVar) toggleExpand(group.itemName)
+                        else navigate(`/inventory/${encodeURIComponent(group.variations[0].name)}`)
+                      }}
+                      onContextMenu={e => {
+                        e.preventDefault()
+                        if (!multiVar) setCtxMenu({ x: e.clientX, y: e.clientY, name: group.variations[0].name })
+                      }}
+                    >
+                      <td className="px-4 py-3 text-slate-500">
+                        {multiVar ? <Chevron open={isOpen} /> : <span className="w-3.5 inline-block" />}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-100">
+                        <div className="flex items-center gap-2">
+                          {group.itemName}
+                          {multiVar && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-teal-500/15 text-teal-400 border border-teal-500/25">
+                              {group.variations.length} vars
+                            </span>
+                          )}
+                          {group.hasSlow && <span className="text-xs text-orange-400">slow</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3"><CategoryBadge category={group.category} /></td>
+                      <td className="px-4 py-3 text-right text-slate-400 tabular-nums">{formatNumber(group.totalUnits)}</td>
+                      <td className="px-4 py-3 text-right text-slate-300 font-semibold tabular-nums">{formatCurrency(group.totalRevenue)}</td>
+                      <td className="px-4 py-3 text-right text-slate-400 tabular-nums">{formatCurrency(group.avgMarketPrice)}</td>
+                      <td className="px-4 py-3 text-center"><TrendBadge trend={group.trend} /></td>
+                    </tr>
+
+                    {/* ── Variation rows ── */}
+                    {isOpen && group.variations.map(v => {
+                      const vt = parseTrend(v)
+                      return (
+                        <tr
+                          key={`var-${v.name}`}
+                          className="border-b border-slate-700/20 bg-slate-900/60 hover:bg-slate-700/30 transition-colors cursor-pointer"
+                          onClick={e => { e.stopPropagation(); navigate(`/inventory/${encodeURIComponent(v.name)}`) }}
+                          onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setCtxMenu({ x: e.clientX, y: e.clientY, name: v.name }) }}
+                        >
+                          <td className="px-4 py-2.5" />
+                          <td className="px-4 py-2.5 pl-10">
+                            <div className="flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-600 shrink-0" />
+                              <span className="text-slate-300 text-xs">
+                                {splitItemVariation(v.name).variationName}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2.5"><CategoryBadge category={v.category} /></td>
+                          <td className="px-4 py-2.5 text-right text-slate-400 text-xs tabular-nums">{formatNumber(v.totalUnitsSold)}</td>
+                          <td className="px-4 py-2.5 text-right text-slate-300 text-xs tabular-nums">{formatCurrency(v.totalRevenue)}</td>
+                          <td className="px-4 py-2.5 text-right text-slate-400 text-xs tabular-nums">{formatCurrency(v.avgPrice)}</td>
+                          <td className="px-4 py-2.5 text-center">
+                            <span className={vt === 'Growing' ? 'text-emerald-400' : vt === 'Declining' ? 'text-red-400' : 'text-slate-500'}>
+                              {vt === 'Growing' ? '↑' : vt === 'Declining' ? '↓' : '→'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </>
                 )
               })}
             </tbody>
           </table>
         </div>
+        {filteredGroups.length === 0 && (
+          <div className="text-center py-12 text-slate-500 text-sm">No products match your filters.</div>
+        )}
       </div>
 
+      {/* Context menu */}
       {ctxMenu && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setCtxMenu(null)} />
           <div
-            className="fixed z-20 bg-slate-800 border border-slate-700 rounded-xl shadow-lg py-1 min-w-44"
+            className="fixed z-20 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-1 min-w-44"
             style={{ left: ctxMenu.x, top: ctxMenu.y }}
             onClick={e => e.stopPropagation()}
           >
-            <p className="px-3 py-1 text-xs text-slate-500 font-medium uppercase">Set category</p>
+            <p className="px-3 py-1 text-xs text-slate-500 font-medium uppercase tracking-wider">Set category</p>
             {ALL_CATEGORY_NAMES.map(cat => (
               <button
                 key={cat}
                 onClick={() => setOverride(ctxMenu.name, cat)}
-                className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-700/50"
+                className="w-full text-left px-3 py-1.5 text-sm hover:bg-slate-700/50 transition-colors cursor-pointer"
               >
                 {cat}
               </button>
