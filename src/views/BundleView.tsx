@@ -366,7 +366,7 @@ export default function BundleView() {
                 </div>
                 {bundle.productNames.map(p => (
                   <div key={p} className="text-xs text-slate-500 flex items-center gap-1">
-                    <span>🛍</span> {p}
+                    <span className="text-slate-600">–</span> {p}
                   </div>
                 ))}
                 <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-700/50">

@@ -109,7 +109,7 @@ function RevenueReportView({ report }: { report: Extract<AnyReport, { type: 'rev
                 <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Avg Transaction</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-700/40">
               {report.timeSeries.map((d, i) => (
                 <tr key={i} className="hover:bg-slate-700/50">
                   <td className="px-4 py-2 text-slate-300">{format(d.date, report.granularity === 'Monthly' ? 'MMMM yyyy' : 'MMM d, yyyy')}</td>
@@ -193,7 +193,7 @@ function TopProductsReportView({ report }: { report: Extract<AnyReport, { type: 
                 <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-500">Avg Price</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-700/40">
               {rows.map((p, i) => (
                 <tr key={p.name} className="hover:bg-slate-700/50">
                   <td className="px-3 py-2 text-center text-slate-500 text-xs">{i + 1}</td>
@@ -292,7 +292,7 @@ function CustomerBehaviorReportView({ report }: { report: Extract<AnyReport, { t
               <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Avg Transaction</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-slate-700/40">
             {report.paymentMethods.map(p => (
               <tr key={p.method} className="hover:bg-slate-700/50">
                 <td className="px-4 py-2 font-medium text-slate-100">{p.method}</td>
@@ -371,7 +371,7 @@ function TransactionLogReportView({ report }: { report: Extract<AnyReport, { typ
                 <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-500">Staff</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-700/40">
               {filtered.slice(0, 500).map((tx, i) => (
                 <tr key={tx.transactionID ?? i} className="hover:bg-slate-700/50">
                   <td className="px-4 py-2 text-slate-500 whitespace-nowrap text-xs">{format(tx.date, 'MMM d, yyyy h:mm a')}</td>
@@ -462,7 +462,7 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
                     <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Units</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-slate-700/40">
                   {selectedSeason.topProducts.map((p, i) => (
                     <tr key={p.name} className="hover:bg-slate-700/50">
                       <td className="px-4 py-2 text-center text-slate-500 text-xs">{i + 1}</td>
@@ -520,7 +520,7 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
                 <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">vs Avg</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-700/40">
               {report.monthly.map(m => {
                 const diff = m.revenue - avgMonthly
                 return (
@@ -698,6 +698,85 @@ function MonthlyDetailReportView({
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* ── Month-over-Month Growth ── */}
+      <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-700">
+          <h3 className="font-semibold text-slate-200">Month-over-Month Growth</h3>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-900 border-b border-slate-700/50">
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Month</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Net Sales</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">vs Prior Month</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Growth %</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700/40">
+              {rows.map((r, i) => {
+                const prior = i > 0 ? rows[i - 1].netSales : null
+                const diff = prior !== null ? r.netSales - prior : null
+                const growthPct = prior !== null && prior > 0 ? ((r.netSales - prior) / prior) * 100 : null
+                const isPositive = diff !== null && diff >= 0
+                return (
+                  <tr key={r.month} className="hover:bg-slate-700/50">
+                    <td className="px-4 py-2 font-medium text-slate-200">{r.label}</td>
+                    <td className="px-4 py-2 text-right font-mono text-slate-200">{$(r.netSales)}</td>
+                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${diff === null ? 'text-slate-500' : isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {diff === null ? '—' : `${isPositive ? '+' : ''}${$(diff)}`}
+                    </td>
+                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${growthPct === null ? 'text-slate-500' : isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {growthPct === null ? '—' : `${isPositive ? '+' : ''}${growthPct.toFixed(1)}%`}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Top Products by Month ── */}
+      {rows.some(r => r.topProducts && r.topProducts.length > 0) && (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-700">
+            <h3 className="font-semibold text-slate-200">Top Products by Month</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Top 5 products per month by revenue</p>
+          </div>
+          <div className="overflow-x-auto max-h-96">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Month</th>
+                  <th className="px-4 py-2 text-center text-xs font-semibold text-slate-500">Rank</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Product</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Revenue</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Units</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-700/40">
+                {rows.flatMap(r =>
+                  (r.topProducts ?? []).slice(0, 5).map((p, idx) => (
+                    <tr key={`${r.month}-${p.name}-${idx}`} className="hover:bg-slate-700/50">
+                      {idx === 0 ? (
+                        <td className="px-4 py-2 font-medium text-slate-300 align-top" rowSpan={Math.min(5, (r.topProducts ?? []).length)}>
+                          {r.label}
+                        </td>
+                      ) : null}
+                      <td className="px-4 py-2 text-center text-slate-500 text-xs">{idx + 1}</td>
+                      <td className="px-4 py-2 text-slate-200 max-w-xs truncate">{p.name}</td>
+                      <td className="px-4 py-2 text-right font-mono text-slate-300">{$(p.totalRevenue)}</td>
+                      <td className="px-4 py-2 text-right text-slate-400">{p.totalUnitsSold}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* ── Income Statement (transposed) ── */}
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
@@ -994,7 +1073,7 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
                 <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Cash %</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-700/40">
               {report.byWeek.map(w => (
                 <tr key={w.weekStart} className="hover:bg-slate-700/50">
                   <td className="px-4 py-2 text-slate-300 whitespace-nowrap">{w.weekLabel}</td>
@@ -1025,7 +1104,7 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
               <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-500">Type</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-slate-700/40">
             {report.paymentBreakdown.map(p => (
               <tr key={p.method} className="hover:bg-slate-700/50">
                 <td className="px-4 py-2 font-medium text-slate-100">{p.method}</td>
@@ -1062,7 +1141,7 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
                 <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-500">Staff</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-700/40">
               {filtered.slice(0, 500).map((tx, i) => (
                 <tr key={tx.transactionID ?? i} className="hover:bg-slate-700/50">
                   <td className="px-4 py-2 text-slate-500 whitespace-nowrap text-xs">{format(tx.date, 'MMM d, yyyy h:mm a')}</td>

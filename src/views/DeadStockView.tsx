@@ -167,7 +167,7 @@ function TierSection({
                     <td className="px-4 py-2 text-slate-400 font-mono">{format(item.lastSaleDate, 'MMM d, yyyy')}</td>
                     <td
                       className="px-4 py-2 text-right font-mono font-semibold"
-                      style={{ color: item.daysSinceLastSale > 30 ? '#ef4444' : '#111827' }}
+                      style={{ color: item.daysSinceLastSale > 30 ? '#ef4444' : '#94a3b8' }}
                     >
                       {item.daysSinceLastSale}
                     </td>
@@ -243,11 +243,11 @@ export default function DeadStockView() {
       </div>
 
       {(deadItems.length > 0 || dyingItems.length > 0) && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-orange-700 mb-3">Recommended Actions</h2>
+        <div className="bg-slate-800/80 border border-orange-500/20 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-orange-400 mb-3">Recommended Actions</h2>
           <div className="space-y-2">
             {[...deadItems, ...dyingItems].slice(0, 10).map(item => (
-              <div key={item.name} className="flex items-start gap-3 bg-slate-800 rounded-lg p-3 border border-orange-100">
+              <div key={item.name} className="flex items-start gap-3 bg-slate-700/50 rounded-lg p-3 border border-slate-600">
                 <div
                   className="w-2 h-2 rounded-full mt-1.5 shrink-0"
                   style={{ backgroundColor: tierColor(item.tier) }}

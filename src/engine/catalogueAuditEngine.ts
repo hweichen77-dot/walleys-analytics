@@ -21,42 +21,12 @@ export type AuditFixType =
 
 // ---------------------------------------------------------------------------
 // Tax rules
-// Item qualifies for tax if its name or category matches any of these patterns.
+// Nothing should be taxable — ramen, carbonated drinks, and merch are all
+// tax-free in this store.
 // ---------------------------------------------------------------------------
 
-const TAXABLE_NAME_PATTERNS = [
-  /ramen/i,
-  /carbonated/i,
-  /soda/i,
-  /sparkling/i,
-  /fizzy/i,
-  /cola/i,
-  /sprite/i,
-  /fanta/i,
-  /pepsi/i,
-  /coke/i,
-  /dr\.?\s*pepper/i,
-  /mountain\s*dew/i,
-  /ginger\s*ale/i,
-  /lemon.?lime/i,
-  /tonic\s*water/i,
-]
-
-const TAXABLE_CATEGORY_PATTERNS = [
-  /ramen/i,
-  /carbonated/i,
-  /soda/i,
-  /sparkling/i,
-  /soft\s*drink/i,
-]
-
-function shouldBeTaxed(product: CatalogueProduct): boolean {
-  const nameLower = product.name.toLowerCase()
-  const catLower = (product.category ?? '').toLowerCase()
-  return (
-    TAXABLE_NAME_PATTERNS.some(p => p.test(nameLower)) ||
-    TAXABLE_CATEGORY_PATTERNS.some(p => p.test(catLower))
-  )
+function shouldBeTaxed(_product: CatalogueProduct): boolean {
+  return false
 }
 
 // ---------------------------------------------------------------------------
@@ -110,27 +80,16 @@ export function auditCatalogue(
     const id = p.id
     const name = p.name
 
-    // 1. Wrong taxation — item should be taxed but isn't
-    if (!p.taxable && shouldBeTaxed(p)) {
-      issues.push({
-        id: nextId(),
-        productId: id,
-        productName: name,
-        issue: 'Missing tax',
-        detail: `"${name}" (${p.category || 'no category'}) should be taxed — ramen and carbonated drinks are taxable.`,
-        severity: 'error',
-        fixType: 'set_taxable_true',
-      })
-    }
+    // 1. Wrong taxation — nothing should be taxed (check removed: shouldBeTaxed always returns false)
 
-    // 2. Wrong taxation — item is taxed but shouldn't be
+    // 2. Wrong taxation — item is taxed but all items should be non-taxable
     if (p.taxable && !shouldBeTaxed(p)) {
       issues.push({
         id: nextId(),
         productId: id,
         productName: name,
         issue: 'Incorrectly taxed',
-        detail: `"${name}" is marked taxable but only ramen and carbonated drinks should be taxed. Category: "${p.category || 'none'}"`,
+        detail: `"${name}" is marked taxable but all items should be non-taxable — ramen, carbonated drinks, and merch are all tax-free in this store. Category: "${p.category || 'none'}"`,
         severity: 'error',
         fixType: 'set_taxable_false',
       })

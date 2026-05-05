@@ -476,7 +476,7 @@ export default function ProfitView() {
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
               <Tooltip formatter={(v: number) => formatCurrency(v)} />
               <Bar dataKey="totalProfit" fill="#34D399" radius={[0, 3, 3, 0]}
-                label={{ position: 'right', formatter: (v: number) => formatCurrency(v), fontSize: 10, fill: '#64748B' }} />
+                label={{ position: 'right', formatter: (v: number) => formatCurrency(v), fontSize: 10, fill: '#94a3b8' }} />
             </BarChart>
           </ResponsiveContainer>
         </div>

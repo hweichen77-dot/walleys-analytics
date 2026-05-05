@@ -164,6 +164,12 @@ export default function SquareSyncView() {
       )}
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-3">
+        {!isConnected && connState !== 'connecting' && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
+            <p className="text-xs font-semibold text-blue-400 mb-1">Setup required before connecting</p>
+            <p className="text-xs text-slate-400">In your <span className="text-blue-300">Square Developer Portal</span>, add <span className="font-mono text-teal-400">http://localhost:7329/square/callback</span> as an OAuth redirect URI. Without this, the connection will fail.</p>
+          </div>
+        )}
         <h2 className="font-semibold text-slate-200">Square Application ID</h2>
         <input
           type="text"

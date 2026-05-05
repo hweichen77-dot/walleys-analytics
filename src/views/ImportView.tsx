@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
-import { importCSVTransactions, importXLSXCatalogue, importShopifyCSV, importEtsyCSV } from '../engine/importEngine'
+import { importCSVTransactions, importXLSXCatalogue, importShopifyCSV, importEtsyCSV, importOpexXLSX } from '../engine/importEngine'
 import { clearAllData } from '../db/dbUtils'
 import { useToastStore } from '../store/toastStore'
 import { formatNumber } from '../utils/format'
@@ -17,6 +17,7 @@ export default function ImportView() {
   const xlsxRef = useRef<HTMLInputElement>(null)
   const shopifyRef = useRef<HTMLInputElement>(null)
   const etsyRef = useRef<HTMLInputElement>(null)
+  const opexRef = useRef<HTMLInputElement>(null)
 
   async function handleCSV(file: File) {
     setImporting(true)
@@ -70,6 +71,24 @@ export default function ImportView() {
       }
     } catch (e) {
       show(`Etsy import failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  async function handleOpex(file: File) {
+    setImporting(true)
+    try {
+      const result = await importOpexXLSX(file)
+      if (result.errors.length > 0) {
+        show(result.errors[0], 'error')
+      } else if (result.added === 0) {
+        show('No operating expenses found in the file.', 'info')
+      } else {
+        show(`Imported ${result.added} operating expense entries`, 'success')
+      }
+    } catch (e) {
+      show(`OPEX import failed: ${(e as Error).message}`, 'error')
     } finally {
       setImporting(false)
     }
@@ -142,7 +161,7 @@ export default function ImportView() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">🛍️</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
             <h2 className="font-semibold text-slate-200">Shopify Orders</h2>
           </div>
           <p className="text-sm text-slate-500 mb-3">Import from Shopify Admin → Orders → Export as CSV.</p>
@@ -159,7 +178,7 @@ export default function ImportView() {
 
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">🧵</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
             <h2 className="font-semibold text-slate-200">Etsy Orders</h2>
           </div>
           <p className="text-sm text-slate-500 mb-3">Import from Etsy Shop Manager → Orders → Download CSV.</p>
@@ -173,6 +192,23 @@ export default function ImportView() {
           <input ref={etsyRef} type="file" accept=".csv" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) handleEtsy(f); e.target.value = '' }} />
         </div>
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          <h2 className="font-semibold text-slate-200">Operating Expenses (XLSX)</h2>
+        </div>
+        <p className="text-sm text-slate-500 mb-3">Import the Walley's Ops spreadsheet to bulk-load operating expenses.</p>
+        <button
+          onClick={() => opexRef.current?.click()}
+          className="px-4 py-2 bg-teal-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-teal-600 disabled:opacity-50"
+          disabled={importing}
+        >
+          {importing ? 'Importing…' : 'Select Ops XLSX'}
+        </button>
+        <input ref={opexRef} type="file" accept=".xlsx" className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) handleOpex(f); e.target.value = '' }} />
       </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">

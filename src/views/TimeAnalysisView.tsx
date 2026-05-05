@@ -69,9 +69,9 @@ export default function TimeAnalysisView() {
                         height: 28,
                         backgroundColor:
                           count === 0
-                            ? 'rgb(243 244 246)'
+                            ? 'rgb(15, 23, 42)'
                             : `rgba(99, 102, 241, ${0.15 + intensity * 0.8})`,
-                        color: intensity > 0.5 ? 'white' : '#374151',
+                        color: intensity > 0.5 ? '#f1f5f9' : '#64748b',
                       }}
                     >
                       {count > 0 ? count : ''}
@@ -91,7 +91,7 @@ export default function TimeAnalysisView() {
                     width: 14,
                     height: 14,
                     backgroundColor:
-                      v === 0 ? 'rgb(243 244 246)' : `rgba(99, 102, 241, ${0.15 + v * 0.8})`,
+                      v === 0 ? 'rgb(15, 23, 42)' : `rgba(99, 102, 241, ${0.15 + v * 0.8})`,
                   }}
                 />
               ))}

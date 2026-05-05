@@ -21,37 +21,37 @@ export type ReportType =
 export const REPORT_META: Record<ReportType, { label: string; icon: string; description: string }> = {
   revenue: {
     label: 'Revenue Summary',
-    icon: '💵',
+    icon: 'rev',
     description: 'Total revenue, transactions, and averages broken down by day, week, or month.',
   },
   'top-products': {
     label: 'Top Products',
-    icon: '🏆',
+    icon: 'top',
     description: 'Ranked products by revenue and units sold with category breakdown.',
   },
   'customer-behavior': {
     label: 'Customer Behavior',
-    icon: '🧠',
+    icon: 'beh',
     description: 'Payment methods, peak trading hours, and busiest days of the week.',
   },
   'transaction-log': {
     label: 'Transaction Log',
-    icon: '📋',
+    icon: 'log',
     description: 'Full filterable transaction history with search by item, amount, and payment type.',
   },
   seasonal: {
     label: 'Seasonal Performance',
-    icon: '📅',
+    icon: 'sea',
     description: 'Month-by-month revenue comparison to spot seasonal trends.',
   },
   'monthly-detail': {
     label: 'Monthly Report',
-    icon: '🗓',
+    icon: 'mo',
     description: 'Deep per-month breakdown: revenue, top product, MoM growth, and daily detail.',
   },
   cash: {
     label: 'Cash Report',
-    icon: '💴',
+    icon: 'csh',
     description: 'Cash-only transactions: revenue, %, peak hours, day-of-week, and full cash log.',
   },
 }
@@ -235,10 +235,10 @@ export interface SeasonalReport {
 }
 
 const SEASON_CONFIG: Record<SeasonName, { icon: string; months: number[]; labels: string[] }> = {
-  Spring: { icon: '🌸', months: [3, 4, 5],  labels: ['March', 'April', 'May'] },
-  Summer: { icon: '☀️', months: [6, 7, 8],  labels: ['June', 'July', 'August'] },
-  Fall:   { icon: '🍂', months: [9, 10, 11], labels: ['September', 'October', 'November'] },
-  Winter: { icon: '❄️', months: [12, 1, 2], labels: ['December', 'January', 'February'] },
+  Spring: { icon: 'spring', months: [3, 4, 5],  labels: ['March', 'April', 'May'] },
+  Summer: { icon: 'summer', months: [6, 7, 8],  labels: ['June', 'July', 'August'] },
+  Fall:   { icon: 'fall',   months: [9, 10, 11], labels: ['September', 'October', 'November'] },
+  Winter: { icon: 'winter', months: [12, 1, 2], labels: ['December', 'January', 'February'] },
 }
 
 function seasonOfMonth(month: number): SeasonName {
