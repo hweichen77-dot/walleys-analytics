@@ -147,7 +147,6 @@ export default function ProductDetailView() {
   if (!stats) {
     return (
       <div className="py-20 text-center text-slate-500">
-        <p className="text-4xl mb-3">🔍</p>
         <p>Product not found.</p>
         <button onClick={() => navigate('/inventory')} className="mt-3 text-teal-400 text-sm underline">← Back</button>
       </div>
@@ -339,11 +338,11 @@ export default function ProductDetailView() {
   )
 }
 
-function KpiCard({ icon, title, value, sub }: { icon: string; title: string; value: string; sub?: string }) {
+function KpiCard({ icon: _icon, title, value, sub }: { icon: string; title: string; value: string; sub?: string }) {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 space-y-1">
       <div className="flex items-center gap-1.5 text-xs text-slate-500">
-        <span>{icon}</span>{title}
+        {title}
       </div>
       <div className="text-lg font-semibold text-slate-100 tabular-nums">{value}</div>
       {sub && <div className="text-xs text-slate-500">{sub}</div>}
@@ -355,7 +354,7 @@ function MonthOverMonthCard({ pct }: { pct: number | null }) {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 space-y-1">
       <div className="flex items-center gap-1.5 text-xs text-slate-500">
-        <span>↕️</span>This vs Last Month
+        This vs Last Month
       </div>
       {pct !== null ? (
         <div className={`text-lg font-semibold tabular-nums flex items-center gap-1 ${pct >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -368,10 +367,9 @@ function MonthOverMonthCard({ pct }: { pct: number | null }) {
   )
 }
 
-function PatternIndicator({ icon, title, value, color = '#e2e8f0' }: { icon: string; title: string; value: string; color?: string }) {
+function PatternIndicator({ icon: _icon, title, value, color = '#e2e8f0' }: { icon: string; title: string; value: string; color?: string }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="text-base mt-0.5">{icon}</span>
       <div>
         <div className="text-xs text-slate-500">{title}</div>
         <div className="text-sm font-semibold" style={{ color }}>{value}</div>
