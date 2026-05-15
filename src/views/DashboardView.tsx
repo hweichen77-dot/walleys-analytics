@@ -226,7 +226,7 @@ export default function DashboardView() {
             {editingGoal ? null : (
               <button
                 onClick={() => { setEditingGoal('weekly'); setGoalInput(weeklyGoal?.toString() ?? '') }}
-                className="text-[10px] text-slate-500 hover:text-slate-300 uppercase tracking-wide"
+                className="text-[10px] text-slate-400 hover:text-slate-300 uppercase tracking-wide"
               >
                 Edit
               </button>
@@ -294,7 +294,7 @@ export default function DashboardView() {
                       ) : (
                         <button
                           onClick={() => { setEditingGoal(period); setGoalInput('') }}
-                          className="text-xs text-slate-500 hover:text-teal-400"
+                          className="text-xs text-slate-400 hover:text-teal-400"
                         >
                           + Set goal
                         </button>
@@ -313,7 +313,7 @@ export default function DashboardView() {
                           <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
                         </div>
                         {pace != null && !hit && (
-                          <p className="text-[10px] text-slate-500 mt-1">
+                          <p className="text-[10px] text-slate-400 mt-1">
                             On pace for {formatCurrency(pace)} this {period === 'weekly' ? 'week' : 'month'}
                           </p>
                         )}

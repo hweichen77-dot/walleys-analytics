@@ -15,10 +15,25 @@ export interface SyncStatus {
 }
 
 function orderToTransaction(order: SquareOrder): Omit<SalesTransaction, 'id'> | null {
-  const date = new Date(order.created_at)
+  // Prefer closed_at (when the order was finalized) over created_at for accurate date bucketing.
+  // Square's own dashboard uses closed_at for daily totals on COMPLETED orders.
+  const rawDate = order.closed_at ?? order.created_at
+  const date = new Date(rawDate)
   if (isNaN(date.getTime())) return null
 
-  const amountCents = order.net_amounts?.total_money?.amount ?? order.total_money?.amount ?? 0
+  // net_amounts.total_money is the authoritative post-discount, post-tip, post-refund net total.
+  // Fall back to total_money (pre-tip gross) only when net_amounts is absent (legacy orders).
+  // When return_amounts is present without net_amounts, subtract the refund manually.
+  let amountCents: number
+  if (order.net_amounts?.total_money?.amount != null) {
+    amountCents = order.net_amounts.total_money.amount
+  } else if (order.total_money?.amount != null) {
+    const gross = order.total_money.amount
+    const returned = order.return_amounts?.total_money?.amount ?? 0
+    amountCents = gross - returned
+  } else {
+    amountCents = 0
+  }
   const netSales = amountCents / 100
 
   const lineItems = order.line_items ?? []
@@ -97,7 +112,7 @@ export async function runSquareSync(
 
   const { accessToken, locationID, daysBack, lastSyncDate } = useAuthStore.getState()
 
-  onStatus({ phase: 'orders', message: 'Fetching orders…', ordersAdded: 0, productsAdded: 0 })
+  onStatus({ phase: 'orders', message: 'Fetching orders...', ordersAdded: 0, productsAdded: 0 })
 
   const endDate = new Date()
   // Incremental: resume from last sync (minus 5 min overlap) instead of full re-fetch
@@ -111,12 +126,12 @@ export async function runSquareSync(
   })
   const ordersAdded = await upsertTransactions(txRows)
 
-  onStatus({ phase: 'catalogue', message: 'Fetching catalogue…', ordersAdded, productsAdded: 0 })
+  onStatus({ phase: 'catalogue', message: 'Fetching catalogue...', ordersAdded, productsAdded: 0 })
   const catItems = await fetchCatalogue(accessToken)
   const products = catItems.flatMap(catalogueToProduct)
   await upsertCatalogueProducts(products)
 
-  onStatus({ phase: 'inventory', message: 'Fetching inventory…', ordersAdded, productsAdded: products.length })
+  onStatus({ phase: 'inventory', message: 'Fetching inventory...', ordersAdded, productsAdded: products.length })
   const invCounts = await fetchInventory(accessToken, locationID)
   const invMap = new Map(invCounts.map(c => [c.catalog_object_id, parseInt(c.quantity, 10)]))
 

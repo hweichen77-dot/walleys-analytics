@@ -163,9 +163,9 @@ function LogRestockModal({ productName, onClose }: { productName: string; onClos
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-100">Log Restock</h2>
-            <p className="text-sm text-slate-500">{productName}</p>
+            <p className="text-sm text-slate-400">{productName}</p>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-400 text-xl leading-none">×</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl leading-none">×</button>
         </div>
 
         <div className="space-y-4">
@@ -231,12 +231,12 @@ export default function RestockView() {
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: 'Total Products', value: alerts.length, color: 'text-slate-100' },
-          { label: 'Out of Stock', value: outOfStockCount, color: outOfStockCount > 0 ? 'text-red-400' : 'text-slate-500' },
-          { label: 'Critical (≤5 days)', value: criticalCount, color: criticalCount > 0 ? 'text-red-400' : 'text-slate-500' },
-          { label: 'Low (6–10 days)', value: lowCount, color: lowCount > 0 ? 'text-orange-400' : 'text-slate-500' },
+          { label: 'Out of Stock', value: outOfStockCount, color: outOfStockCount > 0 ? 'text-red-400' : 'text-slate-400' },
+          { label: 'Critical (≤5 days)', value: criticalCount, color: criticalCount > 0 ? 'text-red-400' : 'text-slate-400' },
+          { label: 'Low (6–10 days)', value: lowCount, color: lowCount > 0 ? 'text-orange-400' : 'text-slate-400' },
         ].map(c => (
           <div key={c.label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <p className="text-xs text-slate-500">{c.label}</p>
+            <p className="text-xs text-slate-400">{c.label}</p>
             <p className={`text-2xl font-bold mt-1 ${c.color}`}>{c.value}</p>
           </div>
         ))}
@@ -255,7 +255,7 @@ export default function RestockView() {
                 />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-100 text-sm">{alert.productName}</p>
-                  <p className="text-xs text-slate-500">{alert.category}</p>
+                  <p className="text-xs text-slate-400">{alert.category}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-semibold text-sm text-slate-100">
@@ -266,7 +266,7 @@ export default function RestockView() {
                       {alert.stockRemaining <= 0 ? 'OUT OF STOCK' : `${alert.stockRemaining} remaining`}
                     </p>
                   ) : (
-                    <p className="text-xs text-slate-500">No stock data</p>
+                    <p className="text-xs text-slate-400">No stock data</p>
                   )}
                 </div>
                 <button
@@ -286,14 +286,14 @@ export default function RestockView() {
           <h2 className="text-base font-semibold text-slate-100">All Products — Stock Status</h2>
         </div>
         {alerts.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">Import CSV sales data to see restock alerts.</div>
+          <div className="p-8 text-center text-sm text-slate-400">Import CSV sales data to see restock alerts.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-slate-900 border-b border-slate-700/50 text-left">
                   {['Product', 'Category', 'Weekly Vel.', 'Est. Stock', 'Days Left', 'Proj. Stockout', 'Last Restocked', 'Status', 'Action'].map(h => (
-                    <th key={h} className="px-4 py-2.5 font-semibold text-slate-500">{h}</th>
+                    <th key={h} className="px-4 py-2.5 font-semibold text-slate-400">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -303,7 +303,7 @@ export default function RestockView() {
                     <td className="px-4 py-2.5">
                       <div className="font-medium text-slate-100">{alert.productName}</div>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-500">{alert.category}</td>
+                    <td className="px-4 py-2.5 text-slate-400">{alert.category}</td>
                     <td className="px-4 py-2.5 font-mono text-slate-300">{alert.weeklyVelocity.toFixed(1)}/wk</td>
                     <td className="px-4 py-2.5 font-mono font-semibold" style={{ color: urgencyColor(alert.urgency) }}>
                       {alert.stockRemaining !== null
@@ -318,7 +318,7 @@ export default function RestockView() {
                     <td className="px-4 py-2.5 font-mono text-slate-400">
                       {alert.projectedStockoutDate ? format(alert.projectedStockoutDate, 'MMM d') : '—'}
                     </td>
-                    <td className="px-4 py-2.5 text-slate-500">
+                    <td className="px-4 py-2.5 text-slate-400">
                       {alert.lastRestockedDate ? format(alert.lastRestockedDate, 'M/d/yy') : 'Never'}
                     </td>
                     <td className="px-4 py-2.5">

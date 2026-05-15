@@ -30,7 +30,7 @@ export function CategoryBreakdownChart({ data }: CategoryBreakdownChartProps) {
             <div key={cat.category} className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
               <span className="flex-1 truncate text-slate-400 text-xs">{cat.category}</span>
-              <span className="text-slate-500 text-xs">{formatPercent(cat.percentage)}</span>
+              <span className="text-slate-400 text-xs">{formatPercent(cat.percentage)}</span>
               <span className="text-slate-200 text-xs font-medium font-mono">{formatCurrency(cat.revenue)}</span>
             </div>
           ))}

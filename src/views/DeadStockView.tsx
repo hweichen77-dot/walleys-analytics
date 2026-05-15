@@ -135,15 +135,15 @@ function TierSection({
       >
         <div className="flex items-center gap-3">
           <span className="font-semibold" style={{ color }}>{tier}</span>
-          <span className="text-sm text-slate-500">({tierItems.length})</span>
+          <span className="text-sm text-slate-400">({tierItems.length})</span>
         </div>
-        <span className="text-xs text-slate-500">{isExpanded ? '▲' : '▼'}</span>
+        <span className="text-xs text-slate-400">{isExpanded ? '▲' : '▼'}</span>
       </button>
 
       {isExpanded && (
         <div className="border-t border-slate-700/50 overflow-x-auto">
           {tierItems.length === 0 ? (
-            <p className="text-sm text-slate-500 p-5">No products in this category.</p>
+            <p className="text-sm text-slate-400 p-5">No products in this category.</p>
           ) : (
             <table className="w-full text-xs">
               <thead>
@@ -162,7 +162,7 @@ function TierSection({
                   <tr key={item.name} className="border-b border-slate-800 hover:bg-slate-700/50">
                     <td className="px-4 py-2">
                       <div className="font-medium text-slate-100">{item.name}</div>
-                      <div className="text-slate-500">{item.category}</div>
+                      <div className="text-slate-400">{item.category}</div>
                     </td>
                     <td className="px-4 py-2 text-slate-400 font-mono">{format(item.lastSaleDate, 'MMM d, yyyy')}</td>
                     <td
@@ -218,7 +218,7 @@ export default function DeadStockView() {
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-100">Dead Stock Detector</h1>
-        <p className="text-sm text-slate-500 mt-1">Products with no or declining sales activity</p>
+        <p className="text-sm text-slate-400 mt-1">Products with no or declining sales activity</p>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
@@ -234,7 +234,7 @@ export default function DeadStockView() {
           },
         ].map(c => (
           <div key={c.label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <p className="text-xs text-slate-500">{c.label}</p>
+            <p className="text-xs text-slate-400">{c.label}</p>
             <p className="text-2xl font-bold mt-1" style={{ color: c.color }}>
               {c.count !== null ? c.count : c.value}
             </p>
@@ -254,7 +254,7 @@ export default function DeadStockView() {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-slate-100 text-sm">{item.name}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{item.recommendation}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{item.recommendation}</div>
                 </div>
                 <span
                   className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
@@ -278,7 +278,7 @@ export default function DeadStockView() {
       {chartData.length > 0 && (
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
           <h2 className="text-base font-semibold text-slate-100">30-Day Sales by Product</h2>
-          <p className="text-xs text-slate-500 mt-0.5 mb-4">Highlighting dead and dying products</p>
+          <p className="text-xs text-slate-400 mt-0.5 mb-4">Highlighting dead and dying products</p>
           <ResponsiveContainer width="100%" height={Math.max(200, chartData.length * 22)}>
             <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 16, left: 16, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} />

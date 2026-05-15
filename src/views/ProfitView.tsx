@@ -190,9 +190,9 @@ function CostManagementModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50">
           <div>
             <h2 className="text-lg font-bold text-slate-100">Manage Costs</h2>
-            <p className="text-xs text-slate-500">{products.length} products</p>
+            <p className="text-xs text-slate-400">{products.length} products</p>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-400 text-xl">×</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl">×</button>
         </div>
 
         <div className="px-6 py-3 border-b border-slate-700/50">
@@ -208,11 +208,11 @@ function CostManagementModal({
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Product</th>
-                <th className="px-4 py-2 text-center text-xs font-semibold text-slate-500 w-20">Mode</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500 w-36">Unit / Case Price</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500 w-24">Units/Case</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500 w-28">Eff. Cost</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-400">Product</th>
+                <th className="px-4 py-2 text-center text-xs font-semibold text-slate-400 w-20">Mode</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400 w-36">Unit / Case Price</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400 w-24">Units/Case</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400 w-28">Eff. Cost</th>
               </tr>
             </thead>
             <tbody>
@@ -223,7 +223,7 @@ function CostManagementModal({
                     <td className="px-4 py-2 text-slate-100 truncate max-w-48">{draft.productName}</td>
                     <td className="px-4 py-2 text-center">
                       <button
-                        className={`text-xs px-2 py-0.5 rounded-full border ${draft.isPerCase ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'border-slate-700 text-slate-500'}`}
+                        className={`text-xs px-2 py-0.5 rounded-full border ${draft.isPerCase ? 'bg-teal-500/15 text-teal-400 border-teal-500/30' : 'border-slate-700 text-slate-400'}`}
                         onClick={() => update(draft.productName, { isPerCase: !draft.isPerCase })}
                       >
                         Case
@@ -251,10 +251,10 @@ function CostManagementModal({
                           value={draft.unitsPerCaseText}
                           onChange={e => update(draft.productName, { unitsPerCaseText: e.target.value })}
                         />
-                      ) : <span className="text-slate-600">—</span>}
+                      ) : <span className="text-slate-400">—</span>}
                     </td>
                     <td className="px-4 py-2 text-right font-mono font-semibold text-sm">
-                      {eff !== null ? `$${eff.toFixed(3)}` : <span className="text-slate-600">—</span>}
+                      {eff !== null ? `$${eff.toFixed(3)}` : <span className="text-slate-400">—</span>}
                     </td>
                   </tr>
                 )
@@ -264,7 +264,7 @@ function CostManagementModal({
         </div>
 
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-700/50">
-          <p className="text-xs text-slate-500">Toggle 'Case' to enter bulk pricing.</p>
+          <p className="text-xs text-slate-400">Toggle 'Case' to enter bulk pricing.</p>
           <button onClick={saveAll} className="px-4 py-2 text-sm bg-teal-500 text-slate-950 rounded-lg hover:bg-teal-600">
             Save All
           </button>
@@ -395,7 +395,7 @@ export default function ProfitView() {
           { label: 'Costs Entered', value: `${profitRows.filter(r => r.hasCostData).length}/${rawStats.length}`, color: '#9ca3af' },
         ].map(c => (
           <div key={c.label} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <p className="text-xs text-slate-500">{c.label}</p>
+            <p className="text-xs text-slate-400">{c.label}</p>
             <p className="text-xl font-bold mt-1 font-mono" style={{ color: c.color }}>{c.value}</p>
           </div>
         ))}
@@ -434,7 +434,7 @@ export default function ProfitView() {
                 ] as [keyof ProfitRow, string][]).map(([key, label]) => (
                   <th
                     key={key}
-                    className="px-4 py-2.5 font-semibold text-slate-500 text-left cursor-pointer hover:bg-slate-700 select-none"
+                    className="px-4 py-2.5 font-semibold text-slate-400 text-left cursor-pointer hover:bg-slate-700 select-none"
                     onClick={() => toggleSort(key)}
                   >
                     {label}{sortArrow(key)}
@@ -446,7 +446,7 @@ export default function ProfitView() {
               {sortedRows.map(r => (
                 <tr key={r.name} className="border-b border-slate-800 hover:bg-slate-700/50">
                   <td className="px-4 py-2 font-medium text-slate-100 max-w-40 truncate">{r.name}</td>
-                  <td className="px-4 py-2 text-slate-500">{r.category}</td>
+                  <td className="px-4 py-2 text-slate-400">{r.category}</td>
                   <td className="px-4 py-2 font-mono text-slate-300">{r.unitCost !== null ? `$${r.unitCost.toFixed(3)}` : '—'}</td>
                   <td className="px-4 py-2 font-mono text-slate-300">${r.avgPrice.toFixed(2)}</td>
                   <td className="px-4 py-2 font-mono font-semibold"

@@ -135,7 +135,7 @@ export default function ImportView() {
     <div className="space-y-6 max-w-2xl">
       <div>
         <h1 className="text-xl font-bold text-slate-100">Import Data</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-400 mt-1">
           {formatNumber(txCount)} transactions · {formatNumber(catCount)} catalogue products stored
         </p>
       </div>
@@ -153,7 +153,7 @@ export default function ImportView() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
         </div>
         <p className="font-medium text-slate-200">Drop Square CSV here or click to browse</p>
-        <p className="text-sm text-slate-500 mt-1">Accepts Square transaction export (.csv)</p>
+        <p className="text-sm text-slate-400 mt-1">Accepts Square transaction export (.csv)</p>
         <input ref={csvRef} type="file" accept=".csv" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleCSV(f); e.target.value = '' }} />
       </div>
@@ -164,7 +164,7 @@ export default function ImportView() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
             <h2 className="font-semibold text-slate-200">Shopify Orders</h2>
           </div>
-          <p className="text-sm text-slate-500 mb-3">Import from Shopify Admin → Orders → Export as CSV.</p>
+          <p className="text-sm text-slate-400 mb-3">Import from Shopify Admin → Orders → Export as CSV.</p>
           <button
             onClick={() => shopifyRef.current?.click()}
             className="px-4 py-2 bg-teal-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-teal-600 disabled:opacity-50"
@@ -181,7 +181,7 @@ export default function ImportView() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
             <h2 className="font-semibold text-slate-200">Etsy Orders</h2>
           </div>
-          <p className="text-sm text-slate-500 mb-3">Import from Etsy Shop Manager → Orders → Download CSV.</p>
+          <p className="text-sm text-slate-400 mb-3">Import from Etsy Shop Manager → Orders → Download CSV.</p>
           <button
             onClick={() => etsyRef.current?.click()}
             className="px-4 py-2 bg-teal-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-teal-600 disabled:opacity-50"
@@ -199,7 +199,7 @@ export default function ImportView() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
           <h2 className="font-semibold text-slate-200">Operating Expenses (XLSX)</h2>
         </div>
-        <p className="text-sm text-slate-500 mb-3">Import the Walley's Ops spreadsheet to bulk-load operating expenses.</p>
+        <p className="text-sm text-slate-400 mb-3">Import the Walley's Ops spreadsheet to bulk-load operating expenses.</p>
         <button
           onClick={() => opexRef.current?.click()}
           className="px-4 py-2 bg-teal-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-teal-600 disabled:opacity-50"
@@ -213,7 +213,7 @@ export default function ImportView() {
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
         <h2 className="font-semibold text-slate-200 mb-3">Catalogue Import (XLSX)</h2>
-        <p className="text-sm text-slate-500 mb-3">Import Square Item Library export to enable price tracking and catalogue checking.</p>
+        <p className="text-sm text-slate-400 mb-3">Import Square Item Library export to enable price tracking and catalogue checking.</p>
         <button
           onClick={() => xlsxRef.current?.click()}
           className="px-4 py-2 bg-teal-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-teal-600 disabled:opacity-50"

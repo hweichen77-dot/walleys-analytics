@@ -38,7 +38,7 @@ export function TopProductsChart({ products }: TopProductsChartProps) {
               className={`px-2.5 py-1 text-xs rounded-md font-medium capitalize transition-colors cursor-pointer ${
                 mode === m
                   ? 'bg-teal-500 text-slate-950'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700'
               }`}
             >
               {m === 'revenue' ? 'By Revenue' : 'By Qty'}

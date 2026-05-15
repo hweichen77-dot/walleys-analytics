@@ -173,13 +173,13 @@ function ItemModal({ editing, forItem, onClose, onSave }: ItemModalProps) {
           <div>
             <h2 className="font-semibold text-slate-100 text-base">{title}</h2>
             {!editing && !isAddVariation && (
-              <p className="text-xs text-slate-500 mt-0.5">Creates the item with its first variation</p>
+              <p className="text-xs text-slate-400 mt-0.5">Creates the item with its first variation</p>
             )}
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-slate-500 hover:text-slate-200 transition-colors cursor-pointer p-1 rounded-md hover:bg-slate-700"
+            className="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-1 rounded-md hover:bg-slate-700"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -289,7 +289,7 @@ function ItemModal({ editing, forItem, onClose, onSave }: ItemModalProps) {
             </label>
           </div>
 
-          <div className="text-xs text-slate-500 bg-slate-700/30 rounded-lg px-3 py-2 border border-slate-700/60">
+          <div className="text-xs text-slate-400 bg-slate-700/30 rounded-lg px-3 py-2 border border-slate-700/60">
             Tax rule: only <span className="text-teal-400">ramen</span> and <span className="text-teal-400">carbonated drinks</span> are taxable.
           </div>
         </div>
@@ -316,7 +316,7 @@ function ItemModal({ editing, forItem, onClose, onSave }: ItemModalProps) {
 // Price range display
 // ---------------------------------------------------------------------------
 function PriceDisplay({ range }: { range: { min: number; max: number } | null }) {
-  if (!range) return <span className="text-slate-600">—</span>
+  if (!range) return <span className="text-slate-400">—</span>
   if (range.min === range.max) return <span className="text-slate-300">{formatCurrency(range.min)}</span>
   return <span className="text-slate-300">{formatCurrency(range.min)} – {formatCurrency(range.max)}</span>
 }
@@ -479,7 +479,7 @@ export default function CatalogueProductsView() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-100">Catalogue Products</h1>
-          <p className="text-sm text-slate-500 mt-0.5">{totalItems} items · {totalVars} total variations</p>
+          <p className="text-sm text-slate-400 mt-0.5">{totalItems} items · {totalVars} total variations</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
@@ -507,12 +507,12 @@ export default function CatalogueProductsView() {
           { label: 'Items',           value: totalItems,    color: 'text-teal-400' },
           { label: 'Multi-variation', value: multiVarItems, color: 'text-blue-400' },
           { label: 'Active vars',     value: activeVars,    color: 'text-emerald-400' },
-          { label: 'Archived',        value: archivedVars,  color: 'text-slate-500' },
+          { label: 'Archived',        value: archivedVars,  color: 'text-slate-400' },
           { label: 'Total stock',     value: totalStock,    color: 'text-amber-400' },
         ].map(s => (
           <div key={s.label} className="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
             <p className={`text-2xl font-bold ${s.color}`}>{s.value.toLocaleString()}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
@@ -539,11 +539,11 @@ export default function CatalogueProductsView() {
         </label>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-slate-600">{filteredGroups.length} items</span>
-          <button onClick={expandAll} className="text-xs text-slate-500 hover:text-teal-400 transition-colors cursor-pointer px-2 py-1 rounded hover:bg-slate-800">
+          <span className="text-xs text-slate-400">{filteredGroups.length} items</span>
+          <button onClick={expandAll} className="text-xs text-slate-400 hover:text-teal-400 transition-colors cursor-pointer px-2 py-1 rounded hover:bg-slate-800">
             Expand all
           </button>
-          <button onClick={collapseAll} className="text-xs text-slate-500 hover:text-teal-400 transition-colors cursor-pointer px-2 py-1 rounded hover:bg-slate-800">
+          <button onClick={collapseAll} className="text-xs text-slate-400 hover:text-teal-400 transition-colors cursor-pointer px-2 py-1 rounded hover:bg-slate-800">
             Collapse all
           </button>
         </div>
@@ -553,7 +553,7 @@ export default function CatalogueProductsView() {
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-900 text-slate-500 uppercase text-xs border-b border-slate-700/60">
+            <thead className="bg-slate-900 text-slate-400 uppercase text-xs border-b border-slate-700/60">
               <tr>
                 <th className="px-4 py-3 text-left w-8"></th>
                 <th className="px-4 py-3 text-left">Item</th>
@@ -579,7 +579,7 @@ export default function CatalogueProductsView() {
                       className={`border-b border-slate-700/40 transition-colors ${varCount > 1 ? 'cursor-pointer hover:bg-slate-700/40' : 'hover:bg-slate-700/20'} ${isOpen ? 'bg-slate-700/20' : ''}`}
                     >
                       {/* Chevron */}
-                      <td className="px-4 py-3 text-slate-500">
+                      <td className="px-4 py-3 text-slate-400">
                         {varCount > 1
                           ? <Chevron open={isOpen} />
                           : <span className="w-3.5 inline-block" />
@@ -596,11 +596,11 @@ export default function CatalogueProductsView() {
                             </span>
                           )}
                           {varCount === 1 && group.variations[0].variationName !== 'Regular' && (
-                            <span className="text-xs text-slate-500">{group.variations[0].variationName}</span>
+                            <span className="text-xs text-slate-400">{group.variations[0].variationName}</span>
                           )}
                         </div>
                         {varCount === 1 && group.variations[0].sku && (
-                          <p className="text-[11px] text-slate-600 font-mono mt-0.5">{group.variations[0].sku}</p>
+                          <p className="text-[11px] text-slate-400 font-mono mt-0.5">{group.variations[0].sku}</p>
                         )}
                       </td>
 
@@ -608,7 +608,7 @@ export default function CatalogueProductsView() {
                       <td className="px-4 py-3">
                         {group.category
                           ? <Badge variant="secondary">{group.category}</Badge>
-                          : <span className="text-slate-600">—</span>}
+                          : <span className="text-slate-400">—</span>}
                       </td>
 
                       {/* Price */}
@@ -618,14 +618,14 @@ export default function CatalogueProductsView() {
 
                       {/* Stock */}
                       <td className="px-4 py-3 text-right text-slate-300 tabular-nums">
-                        {group.totalQuantity > 0 ? group.totalQuantity : <span className="text-slate-600">—</span>}
+                        {group.totalQuantity > 0 ? group.totalQuantity : <span className="text-slate-400">—</span>}
                       </td>
 
                       {/* Tax */}
                       <td className="px-4 py-3 text-center">
                         {group.anyTaxable
                           ? <span className="text-xs font-medium text-emerald-400">Yes</span>
-                          : <span className="text-xs text-slate-600">No</span>}
+                          : <span className="text-xs text-slate-400">No</span>}
                       </td>
 
                       {/* Status */}
@@ -633,7 +633,7 @@ export default function CatalogueProductsView() {
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           group.allEnabled ? 'bg-emerald-500/15 text-emerald-400'
                           : group.hasEnabled ? 'bg-amber-500/15 text-amber-400'
-                          : 'bg-slate-700 text-slate-500'
+                          : 'bg-slate-700 text-slate-400'
                         }`}>
                           {group.allEnabled ? 'Active' : group.hasEnabled ? 'Partial' : 'Archived'}
                         </span>
@@ -675,32 +675,32 @@ export default function CatalogueProductsView() {
                             <span className="text-slate-200 text-xs font-medium">
                               {v.variationName || 'Regular'}
                             </span>
-                            {v.sku && <span className="text-[10px] text-slate-600 font-mono">{v.sku}</span>}
+                            {v.sku && <span className="text-[10px] text-slate-400 font-mono">{v.sku}</span>}
                           </div>
                         </td>
 
                         <td className="px-4 py-2.5">
                           {vi === 0
-                            ? group.category ? <Badge variant="secondary">{group.category}</Badge> : <span className="text-slate-600">—</span>
+                            ? group.category ? <Badge variant="secondary">{group.category}</Badge> : <span className="text-slate-400">—</span>
                             : null}
                         </td>
 
                         <td className="px-4 py-2.5 text-right text-slate-300 text-xs tabular-nums">
-                          {v.price != null ? formatCurrency(v.price) : <span className="text-slate-600">—</span>}
+                          {v.price != null ? formatCurrency(v.price) : <span className="text-slate-400">—</span>}
                         </td>
 
                         <td className="px-4 py-2.5 text-right text-slate-300 text-xs tabular-nums">
-                          {v.quantity != null ? v.quantity : <span className="text-slate-600">—</span>}
+                          {v.quantity != null ? v.quantity : <span className="text-slate-400">—</span>}
                         </td>
 
                         <td className="px-4 py-2.5 text-center">
                           {v.taxable
                             ? <span className="text-xs text-emerald-400">Yes</span>
-                            : <span className="text-xs text-slate-600">No</span>}
+                            : <span className="text-xs text-slate-400">No</span>}
                         </td>
 
                         <td className="px-4 py-2.5 text-center">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${v.enabled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-500'}`}>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${v.enabled ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
                             {v.enabled ? 'Active' : 'Archived'}
                           </span>
                         </td>
@@ -722,12 +722,12 @@ export default function CatalogueProductsView() {
           </table>
         </div>
         {filteredGroups.length === 0 && (
-          <div className="text-center py-12 text-slate-500 text-sm">No items match your filters.</div>
+          <div className="text-center py-12 text-slate-400 text-sm">No items match your filters.</div>
         )}
       </div>
 
       {/* Footer hint */}
-      <p className="text-xs text-slate-600 text-right">
+      <p className="text-xs text-slate-400 text-right">
         "Export to Square" downloads a .xlsx importable at Square Dashboard → Items → Actions → Import Library.
       </p>
 

@@ -18,10 +18,16 @@ export interface SquareOrderLineItem {
 export interface SquareOrder {
   id: string
   created_at: string
-  tenders?: { type: string }[]
+  // closed_at is when the order was actually completed — prefer over created_at for date bucketing
+  closed_at?: string
+  tenders?: { type: string; amount_money?: { amount: number } }[]
   line_items?: SquareOrderLineItem[]
+  // net_amounts reflects post-discount, post-refund, post-tip totals — use this first
   net_amounts?: { total_money: { amount: number } }
+  // total_money is the order total before tips; present on older API responses
   total_money?: { amount: number }
+  // return_amounts is present when refunds have been applied to this order
+  return_amounts?: { total_money: { amount: number } }
   employee_id?: string
 }
 

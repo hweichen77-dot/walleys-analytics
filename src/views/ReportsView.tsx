@@ -103,10 +103,10 @@ function RevenueReportView({ report }: { report: Extract<AnyReport, { type: 'rev
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Period</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Revenue</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Transactions</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Avg Transaction</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-400">Period</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Revenue</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Transactions</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Avg Transaction</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
@@ -149,7 +149,7 @@ function TopProductsReportView({ report }: { report: Extract<AnyReport, { type: 
           <div className="flex gap-1">
             {(['revenue', 'units'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
-                className={`px-2.5 py-1 text-xs rounded-lg font-medium ${tab === t ? 'bg-teal-500 text-slate-950' : 'text-slate-500 hover:bg-slate-700'}`}>
+                className={`px-2.5 py-1 text-xs rounded-lg font-medium ${tab === t ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:bg-slate-700'}`}>
                 By {t === 'revenue' ? 'Revenue' : 'Units'}
               </button>
             ))}
@@ -175,7 +175,7 @@ function TopProductsReportView({ report }: { report: Extract<AnyReport, { type: 
           <div className="flex gap-1">
             {(['revenue', 'units'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
-                className={`px-2.5 py-1 text-xs rounded-lg font-medium ${tab === t ? 'bg-teal-500 text-slate-950' : 'text-slate-500 hover:bg-slate-700'}`}>
+                className={`px-2.5 py-1 text-xs rounded-lg font-medium ${tab === t ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:bg-slate-700'}`}>
                 By {t === 'revenue' ? 'Revenue' : 'Units'}
               </button>
             ))}
@@ -185,23 +185,23 @@ function TopProductsReportView({ report }: { report: Extract<AnyReport, { type: 
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-3 py-2 text-center text-xs font-semibold text-slate-500">#</th>
-                <th className="px-3 py-2 text-left   text-xs font-semibold text-slate-500">Product</th>
-                <th className="px-3 py-2 text-left   text-xs font-semibold text-slate-500">Category</th>
-                <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-500">Revenue</th>
-                <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-500">Units</th>
-                <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-500">Avg Price</th>
+                <th className="px-3 py-2 text-center text-xs font-semibold text-slate-400">#</th>
+                <th className="px-3 py-2 text-left   text-xs font-semibold text-slate-400">Product</th>
+                <th className="px-3 py-2 text-left   text-xs font-semibold text-slate-400">Category</th>
+                <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-400">Revenue</th>
+                <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-400">Units</th>
+                <th className="px-3 py-2 text-right  text-xs font-semibold text-slate-400">Avg Price</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
               {rows.map((p, i) => (
                 <tr key={p.name} className="hover:bg-slate-700/50">
-                  <td className="px-3 py-2 text-center text-slate-500 text-xs">{i + 1}</td>
+                  <td className="px-3 py-2 text-center text-slate-400 text-xs">{i + 1}</td>
                   <td className="px-3 py-2 font-medium text-slate-100 max-w-xs truncate">{p.name}</td>
-                  <td className="px-3 py-2 text-slate-500 text-xs">{p.category || '—'}</td>
+                  <td className="px-3 py-2 text-slate-400 text-xs">{p.category || '—'}</td>
                   <td className="px-3 py-2 text-right font-mono text-slate-300">{formatCurrency(p.totalRevenue)}</td>
                   <td className="px-3 py-2 text-right text-slate-300">{formatNumber(p.totalUnitsSold)}</td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-500">{formatCurrency(p.avgPrice)}</td>
+                  <td className="px-3 py-2 text-right font-mono text-slate-400">{formatCurrency(p.avgPrice)}</td>
                 </tr>
               ))}
             </tbody>
@@ -241,7 +241,7 @@ function CustomerBehaviorReportView({ report }: { report: Extract<AnyReport, { t
                 <div key={p.method} className="flex items-center gap-2 text-sm">
                   <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
                   <span className="flex-1 truncate text-slate-300">{p.method}</span>
-                  <span className="text-slate-500 text-xs">{formatPercent(p.pct)}</span>
+                  <span className="text-slate-400 text-xs">{formatPercent(p.pct)}</span>
                 </div>
               ))}
             </div>
@@ -285,11 +285,11 @@ function CustomerBehaviorReportView({ report }: { report: Extract<AnyReport, { t
         <table className="w-full text-sm">
           <thead className="bg-slate-900 border-b border-slate-700/50">
             <tr>
-              <th className="px-4 py-2 text-left   text-xs font-semibold text-slate-500">Method</th>
-              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Transactions</th>
-              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Share</th>
-              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Revenue</th>
-              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Avg Transaction</th>
+              <th className="px-4 py-2 text-left   text-xs font-semibold text-slate-400">Method</th>
+              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-400">Transactions</th>
+              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-400">Share</th>
+              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-400">Revenue</th>
+              <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-400">Avg Transaction</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700/40">
@@ -297,7 +297,7 @@ function CustomerBehaviorReportView({ report }: { report: Extract<AnyReport, { t
               <tr key={p.method} className="hover:bg-slate-700/50">
                 <td className="px-4 py-2 font-medium text-slate-100">{p.method}</td>
                 <td className="px-4 py-2 text-right text-slate-300">{formatNumber(p.count)}</td>
-                <td className="px-4 py-2 text-right text-slate-500">{formatPercent(p.pct)}</td>
+                <td className="px-4 py-2 text-right text-slate-400">{formatPercent(p.pct)}</td>
                 <td className="px-4 py-2 text-right font-mono text-slate-300">{formatCurrency(p.revenue)}</td>
                 <td className="px-4 py-2 text-right font-mono text-slate-400">
                   {formatCurrency(p.count > 0 ? p.revenue / p.count : 0)}
@@ -356,7 +356,7 @@ function TransactionLogReportView({ report }: { report: Extract<AnyReport, { typ
           onChange={e => setMinAmount(e.target.value)}
           className="border border-slate-600 rounded-lg px-3 py-2 bg-slate-700/50 text-sm w-36 focus:outline-none focus:outline-none focus:ring-2 focus:ring-teal-500/30"
         />
-        <span className="self-center text-sm text-slate-500 ml-auto">{formatNumber(filtered.length)} transactions</span>
+        <span className="self-center text-sm text-slate-400 ml-auto">{formatNumber(filtered.length)} transactions</span>
       </div>
 
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
@@ -364,27 +364,27 @@ function TransactionLogReportView({ report }: { report: Extract<AnyReport, { typ
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-500">Date & Time</th>
-                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-500">Items</th>
-                <th className="px-4 py-2.5 text-right  text-xs font-semibold text-slate-500">Amount</th>
-                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-500">Payment</th>
-                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-500">Staff</th>
+                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-400">Date & Time</th>
+                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-400">Items</th>
+                <th className="px-4 py-2.5 text-right  text-xs font-semibold text-slate-400">Amount</th>
+                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-400">Payment</th>
+                <th className="px-4 py-2.5 text-left   text-xs font-semibold text-slate-400">Staff</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
               {filtered.slice(0, 500).map((tx, i) => (
                 <tr key={tx.transactionID ?? i} className="hover:bg-slate-700/50">
-                  <td className="px-4 py-2 text-slate-500 whitespace-nowrap text-xs">{format(tx.date, 'MMM d, yyyy h:mm a')}</td>
+                  <td className="px-4 py-2 text-slate-400 whitespace-nowrap text-xs">{format(tx.date, 'MMM d, yyyy h:mm a')}</td>
                   <td className="px-4 py-2 text-slate-200 max-w-xs truncate">{tx.itemDescription}</td>
                   <td className="px-4 py-2 text-right font-mono text-slate-200">{formatCurrency(tx.netSales)}</td>
-                  <td className="px-4 py-2 text-slate-500 text-xs">{tx.paymentMethod || '—'}</td>
-                  <td className="px-4 py-2 text-slate-500 text-xs">{tx.staffName || '—'}</td>
+                  <td className="px-4 py-2 text-slate-400 text-xs">{tx.paymentMethod || '—'}</td>
+                  <td className="px-4 py-2 text-slate-400 text-xs">{tx.staffName || '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {filtered.length > 500 && (
-            <p className="text-center text-xs text-slate-500 py-3">
+            <p className="text-center text-xs text-slate-400 py-3">
               Showing first 500 of {formatNumber(filtered.length)} — export CSV for full list
             </p>
           )}
@@ -435,8 +435,8 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
               </div>
               <p className="font-semibold text-slate-200 text-sm">{s.name}</p>
               <p className="font-mono text-slate-100 mt-1">{formatCurrency(s.revenue)}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{s.revenueShare.toFixed(1)}% of total · {formatNumber(s.transactions)} txns</p>
-              {s.topProducts[0] && <p className="text-xs text-slate-500 mt-1 truncate">Top: {s.topProducts[0].name}</p>}
+              <p className="text-xs text-slate-400 mt-0.5">{s.revenueShare.toFixed(1)}% of total · {formatNumber(s.transactions)} txns</p>
+              {s.topProducts[0] && <p className="text-xs text-slate-400 mt-1 truncate">Top: {s.topProducts[0].name}</p>}
             </button>
           )
         })}
@@ -448,7 +448,7 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
           <div className="px-4 py-3 border-b border-slate-700/50 flex items-center gap-2">
             <span className="text-xs font-bold text-slate-400 bg-slate-700 px-2 py-1 rounded">{selectedSeason.name.slice(0,2).toUpperCase()}</span>
             <h3 className="font-semibold text-slate-200">{selectedSeason.name} — Top Products</h3>
-            <span className="text-xs text-slate-500 ml-auto">{selectedSeason.months.join(', ')}</span>
+            <span className="text-xs text-slate-400 ml-auto">{selectedSeason.months.join(', ')}</span>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-700/50">
             {/* Top products table */}
@@ -456,16 +456,16 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
               <table className="w-full text-sm">
                 <thead className="bg-slate-900 border-b border-slate-700/50">
                   <tr>
-                    <th className="px-4 py-2 text-center text-xs font-semibold text-slate-500">#</th>
-                    <th className="px-4 py-2 text-left   text-xs font-semibold text-slate-500">Product</th>
-                    <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Revenue</th>
-                    <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-500">Units</th>
+                    <th className="px-4 py-2 text-center text-xs font-semibold text-slate-400">#</th>
+                    <th className="px-4 py-2 text-left   text-xs font-semibold text-slate-400">Product</th>
+                    <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-400">Revenue</th>
+                    <th className="px-4 py-2 text-right  text-xs font-semibold text-slate-400">Units</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700/40">
                   {selectedSeason.topProducts.map((p, i) => (
                     <tr key={p.name} className="hover:bg-slate-700/50">
-                      <td className="px-4 py-2 text-center text-slate-500 text-xs">{i + 1}</td>
+                      <td className="px-4 py-2 text-center text-slate-400 text-xs">{i + 1}</td>
                       <td className="px-4 py-2 font-medium text-slate-200 max-w-xs truncate">{p.name}</td>
                       <td className="px-4 py-2 text-right font-mono text-slate-300">{formatCurrency(p.totalRevenue)}</td>
                       <td className="px-4 py-2 text-right text-slate-400">{formatNumber(p.totalUnitsSold)}</td>
@@ -476,7 +476,7 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
             </div>
             {/* Month breakdown for this season */}
             <div className="p-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Monthly Breakdown</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase mb-3">Monthly Breakdown</p>
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={selectedSeason.monthBreakdown} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
@@ -513,11 +513,11 @@ function SeasonalReportView({ report }: { report: Extract<AnyReport, { type: 'se
           <table className="w-full text-sm">
             <thead className="bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-500">Month</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Revenue</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Transactions</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Avg Transaction</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">vs Avg</th>
+                <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-400">Month</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Revenue</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Transactions</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Avg Transaction</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">vs Avg</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
@@ -601,7 +601,7 @@ function MonthlyDetailReportView({
   const SectionRow = ({ label }: { label: string }) => (
     <tr className="bg-slate-900/70">
       <td className="sticky left-0 z-10 bg-slate-900/70 px-3 py-1.5 border-r border-slate-700/60">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</span>
       </td>
       {rows.map(r => <td key={r.month} className="px-3 py-1.5" />)}
       <td className="px-3 py-1.5 border-l border-slate-700" />
@@ -623,11 +623,11 @@ function MonthlyDetailReportView({
     dim?: boolean
   }) => (
     <tr className="border-t border-slate-700/20 hover:bg-slate-700/10 transition-colors">
-      <td className={`${labelCell} ${indent ? 'pl-6' : ''} ${dim ? 'text-slate-500' : ''}`}>{label}</td>
+      <td className={`${labelCell} ${indent ? 'pl-6' : ''} ${dim ? 'text-slate-400' : ''}`}>{label}</td>
       {vals.map((v, i) => (
-        <td key={i} className={`${dataCell} ${dim ? 'text-slate-500' : ''}`}>{v ?? '—'}</td>
+        <td key={i} className={`${dataCell} ${dim ? 'text-slate-400' : ''}`}>{v ?? '—'}</td>
       ))}
-      <td className={`${totalCell} ${dim ? 'text-slate-500' : ''}`}>{total}</td>
+      <td className={`${totalCell} ${dim ? 'text-slate-400' : ''}`}>{total}</td>
     </tr>
   )
 
@@ -659,12 +659,12 @@ function MonthlyDetailReportView({
         {vals.map((v, i) => (
           <td key={i} className={`px-3 py-2.5 text-right font-mono text-xs font-semibold whitespace-nowrap min-w-[90px] ${valMap[color]}`}>
             {v ?? '—'}
-            {sub?.[i] && <div className="text-[10px] text-slate-500 font-normal">{sub[i]}</div>}
+            {sub?.[i] && <div className="text-[10px] text-slate-400 font-normal">{sub[i]}</div>}
           </td>
         ))}
         <td className={`px-3 py-2.5 text-right font-mono text-xs font-bold whitespace-nowrap min-w-[90px] border-l border-slate-700 ${valMap[color]}`}>
           {total}
-          {totalSub && <div className="text-[10px] text-slate-500 font-normal">{totalSub}</div>}
+          {totalSub && <div className="text-[10px] text-slate-400 font-normal">{totalSub}</div>}
         </td>
       </tr>
     )
@@ -708,10 +708,10 @@ function MonthlyDetailReportView({
           <table className="w-full text-sm">
             <thead className="bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Month</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Net Sales</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">vs Prior Month</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Growth %</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-slate-400">Month</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Net Sales</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">vs Prior Month</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Growth %</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
@@ -724,10 +724,10 @@ function MonthlyDetailReportView({
                   <tr key={r.month} className="hover:bg-slate-700/50">
                     <td className="px-4 py-2 font-medium text-slate-200">{r.label}</td>
                     <td className="px-4 py-2 text-right font-mono text-slate-200">{$(r.netSales)}</td>
-                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${diff === null ? 'text-slate-500' : isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${diff === null ? 'text-slate-400' : isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                       {diff === null ? '—' : `${isPositive ? '+' : ''}${$(diff)}`}
                     </td>
-                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${growthPct === null ? 'text-slate-500' : isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <td className={`px-4 py-2 text-right font-mono text-xs font-medium ${growthPct === null ? 'text-slate-400' : isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                       {growthPct === null ? '—' : `${isPositive ? '+' : ''}${growthPct.toFixed(1)}%`}
                     </td>
                   </tr>
@@ -743,17 +743,17 @@ function MonthlyDetailReportView({
         <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-700">
             <h3 className="font-semibold text-slate-200">Top Products by Month</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Top 5 products per month by revenue</p>
+            <p className="text-xs text-slate-400 mt-0.5">Top 5 products per month by revenue</p>
           </div>
           <div className="overflow-x-auto max-h-96">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Month</th>
-                  <th className="px-4 py-2 text-center text-xs font-semibold text-slate-500">Rank</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-slate-500">Product</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Revenue</th>
-                  <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Units</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-slate-400">Month</th>
+                  <th className="px-4 py-2 text-center text-xs font-semibold text-slate-400">Rank</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-slate-400">Product</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Revenue</th>
+                  <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Units</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700/40">
@@ -765,7 +765,7 @@ function MonthlyDetailReportView({
                           {r.label}
                         </td>
                       ) : null}
-                      <td className="px-4 py-2 text-center text-slate-500 text-xs">{idx + 1}</td>
+                      <td className="px-4 py-2 text-center text-slate-400 text-xs">{idx + 1}</td>
                       <td className="px-4 py-2 text-slate-200 max-w-xs truncate">{p.name}</td>
                       <td className="px-4 py-2 text-right font-mono text-slate-300">{$(p.totalRevenue)}</td>
                       <td className="px-4 py-2 text-right text-slate-400">{p.totalUnitsSold}</td>
@@ -782,7 +782,7 @@ function MonthlyDetailReportView({
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-700">
           <h3 className="font-semibold text-slate-200">Income Statement</h3>
-          <p className="text-xs text-slate-500 mt-0.5">All months — row labels left, columns right. Scroll horizontally.</p>
+          <p className="text-xs text-slate-400 mt-0.5">All months — row labels left, columns right. Scroll horizontally.</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -790,7 +790,7 @@ function MonthlyDetailReportView({
             {/* ── Column headers ── */}
             <thead>
               <tr className="bg-slate-900 border-b border-slate-700">
-                <th className="sticky left-0 z-20 bg-slate-900 px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-slate-500 border-r border-slate-700/60 min-w-[180px]">
+                <th className="sticky left-0 z-20 bg-slate-900 px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400 border-r border-slate-700/60 min-w-[180px]">
                   Line Item
                 </th>
                 {rows.map(r => (
@@ -920,7 +920,7 @@ function MonthlyDetailReportView({
                   )}
                   {/* OPEX total row */}
                   <tr className="border-t border-slate-700/40 bg-slate-900/30">
-                    <td className="sticky left-0 z-10 bg-slate-900/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 border-r border-slate-700/60 min-w-[180px]">
+                    <td className="sticky left-0 z-10 bg-slate-900/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 border-r border-slate-700/60 min-w-[180px]">
                       Total OPEX
                     </td>
                     {rows.map(r => (
@@ -969,11 +969,11 @@ function MonthlyDetailReportView({
 
               {/* ── TRANSACTIONS STRIP ── */}
               <tr className="border-t-2 border-slate-700 bg-slate-900/50">
-                <td className="sticky left-0 z-10 bg-slate-900/50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 border-r border-slate-700/60 min-w-[180px]">
+                <td className="sticky left-0 z-10 bg-slate-900/50 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 border-r border-slate-700/60 min-w-[180px]">
                   Transactions
                 </td>
                 {rows.map(r => (
-                  <td key={r.month} className="px-3 py-2 text-right text-xs text-slate-500 whitespace-nowrap min-w-[90px]">
+                  <td key={r.month} className="px-3 py-2 text-right text-xs text-slate-400 whitespace-nowrap min-w-[90px]">
                     {formatNumber(r.transactions)}
                   </td>
                 ))}
@@ -1066,11 +1066,11 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-500">Week</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Cash Revenue</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Cash Txns</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Total Revenue</th>
-                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Cash %</th>
+                <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-400">Week</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Cash Revenue</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Cash Txns</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Total Revenue</th>
+                <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Cash %</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
@@ -1079,8 +1079,8 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
                   <td className="px-4 py-2 text-slate-300 whitespace-nowrap">{w.weekLabel}</td>
                   <td className="px-4 py-2 text-right font-mono text-slate-200">{formatCurrency(w.cashRevenue)}</td>
                   <td className="px-4 py-2 text-right text-slate-400">{formatNumber(w.cashCount)}</td>
-                  <td className="px-4 py-2 text-right font-mono text-slate-500">{formatCurrency(w.totalRevenue)}</td>
-                  <td className="px-4 py-2 text-right text-xs text-slate-500">
+                  <td className="px-4 py-2 text-right font-mono text-slate-400">{formatCurrency(w.totalRevenue)}</td>
+                  <td className="px-4 py-2 text-right text-xs text-slate-400">
                     {w.totalRevenue > 0 ? `${((w.cashRevenue / w.totalRevenue) * 100).toFixed(1)}%` : '—'}
                   </td>
                 </tr>
@@ -1098,10 +1098,10 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
         <table className="w-full text-sm">
           <thead className="bg-slate-900 border-b border-slate-700/50">
             <tr>
-              <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-500">Method</th>
-              <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Transactions</th>
-              <th className="px-4 py-2 text-right text-xs font-semibold text-slate-500">Revenue</th>
-              <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-500">Type</th>
+              <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-400">Method</th>
+              <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Transactions</th>
+              <th className="px-4 py-2 text-right text-xs font-semibold text-slate-400">Revenue</th>
+              <th className="px-4 py-2 text-left  text-xs font-semibold text-slate-400">Type</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700/40">
@@ -1113,7 +1113,7 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
                 <td className="px-4 py-2">
                   {p.isCash
                     ? <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-emerald-400 font-medium">Cash</span>
-                    : <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-500">Card / Other</span>}
+                    : <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">Card / Other</span>}
                 </td>
               </tr>
             ))}
@@ -1135,25 +1135,25 @@ function CashReportView({ report }: { report: Extract<AnyReport, { type: 'cash' 
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
-                <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-500">Date & Time</th>
-                <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-500">Items</th>
-                <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-500">Amount</th>
-                <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-500">Staff</th>
+                <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-400">Date & Time</th>
+                <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-400">Items</th>
+                <th className="px-4 py-2.5 text-right text-xs font-semibold text-slate-400">Amount</th>
+                <th className="px-4 py-2.5 text-left  text-xs font-semibold text-slate-400">Staff</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/40">
               {filtered.slice(0, 500).map((tx, i) => (
                 <tr key={tx.transactionID ?? i} className="hover:bg-slate-700/50">
-                  <td className="px-4 py-2 text-slate-500 whitespace-nowrap text-xs">{format(tx.date, 'MMM d, yyyy h:mm a')}</td>
+                  <td className="px-4 py-2 text-slate-400 whitespace-nowrap text-xs">{format(tx.date, 'MMM d, yyyy h:mm a')}</td>
                   <td className="px-4 py-2 text-slate-200 max-w-xs truncate">{tx.itemDescription}</td>
                   <td className="px-4 py-2 text-right font-mono text-slate-200">{formatCurrency(tx.netSales)}</td>
-                  <td className="px-4 py-2 text-slate-500 text-xs">{tx.staffName || '—'}</td>
+                  <td className="px-4 py-2 text-slate-400 text-xs">{tx.staffName || '—'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {filtered.length > 500 && (
-            <p className="text-center text-xs text-slate-500 py-3">
+            <p className="text-center text-xs text-slate-400 py-3">
               Showing first 500 of {formatNumber(filtered.length)} — export CSV for full list
             </p>
           )}
@@ -1257,7 +1257,7 @@ export default function ReportsView() {
               <p className={`text-sm font-semibold leading-tight ${active ? 'text-teal-400' : 'text-slate-200'}`}>
                 {meta.label}
               </p>
-              <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{meta.description}</p>
+              <p className="text-xs text-slate-400 mt-1 leading-snug line-clamp-2">{meta.description}</p>
             </button>
           )
         })}
@@ -1268,13 +1268,13 @@ export default function ReportsView() {
         {/* Date range */}
         <div className="flex items-center gap-2">
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">From</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">From</label>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
               className="border border-slate-600 rounded-lg px-3 py-2 bg-slate-700/50 text-sm focus:outline-none focus:outline-none focus:ring-2 focus:ring-teal-500/30" />
           </div>
-          <span className="text-slate-500 mt-5">–</span>
+          <span className="text-slate-400 mt-5">–</span>
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">To</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">To</label>
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
               className="border border-slate-600 rounded-lg px-3 py-2 bg-slate-700/50 text-sm focus:outline-none focus:outline-none focus:ring-2 focus:ring-teal-500/30" />
           </div>
@@ -1283,7 +1283,7 @@ export default function ReportsView() {
         {/* Granularity (revenue only) */}
         {selectedType === 'revenue' && (
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Granularity</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Granularity</label>
             <div className="flex gap-1">
               {(['Daily', 'Weekly', 'Monthly'] as TimeGranularity[]).map(g => (
                 <button key={g} onClick={() => setGranularity(g)}
@@ -1300,7 +1300,7 @@ export default function ReportsView() {
         {/* Top N (top-products only) */}
         {selectedType === 'top-products' && (
           <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Show top</label>
+            <label className="block text-xs font-medium text-slate-400 mb-1">Show top</label>
             <select value={topN} onChange={e => setTopN(Number(e.target.value))}
               className="border border-slate-600 rounded-lg px-3 py-2 bg-slate-700/50 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30">
               {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} products</option>)}
@@ -1337,7 +1337,7 @@ export default function ReportsView() {
         )}
 
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-xs text-slate-500">{formatNumber(filtered.length)} transactions in range</span>
+          <span className="text-xs text-slate-400">{formatNumber(filtered.length)} transactions in range</span>
           <button
             onClick={generate}
             disabled={generating || filtered.length === 0}
@@ -1353,7 +1353,7 @@ export default function ReportsView() {
 
       {/* ── Loading ── */}
       {generating && (
-        <div className="flex items-center justify-center py-20 text-slate-500">
+        <div className="flex items-center justify-center py-20 text-slate-400">
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-slate-700 border-t-teal-400 rounded-full animate-spin" />
             <span className="text-sm">Building report…</span>
@@ -1368,7 +1368,7 @@ export default function ReportsView() {
           <div className="flex items-center justify-between bg-slate-800 border border-slate-700 rounded-xl px-4 py-3">
             <div>
               <p className="text-sm font-semibold text-slate-200">{REPORT_META[report.type].label}</p>
-              <p className="text-xs text-slate-500">{dateRangeLabel}</p>
+              <p className="text-xs text-slate-400">{dateRangeLabel}</p>
             </div>
             <ExportBar
               loading={false}
@@ -1390,7 +1390,7 @@ export default function ReportsView() {
 
       {/* ── Empty prompt (no report generated yet) ── */}
       {!generating && !report && (
-        <div className="text-center py-16 text-slate-500">
+        <div className="text-center py-16 text-slate-400">
           <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-3">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           </div>

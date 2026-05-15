@@ -40,7 +40,7 @@ export function RevenueChart({ daily, weekly, monthly }: RevenueChartProps) {
               className={`px-2.5 py-1 text-xs font-medium transition-colors duration-150 cursor-pointer ${
                 granularity === g
                   ? 'bg-teal-500/15 text-teal-400'
-                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/50'
+                  : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
               }`}
             >
               {g}

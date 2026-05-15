@@ -107,7 +107,7 @@ function EventEditModal({
       <div className="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 w-96 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{event ? 'Edit Event' : 'Add Event'}</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-400 text-xl">×</button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-200 text-xl">×</button>
         </div>
         <div className="space-y-3">
           <div>
@@ -141,7 +141,7 @@ function EventEditModal({
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-5">
-          <button onClick={onClose} className="text-sm text-slate-500 hover:text-slate-300">Cancel</button>
+          <button onClick={onClose} className="text-sm text-slate-400 hover:text-slate-300">Cancel</button>
           <button
             disabled={!name.trim()}
             onClick={() => { onSave(name, type, new Date(start), new Date(end), notes); onClose() }}
@@ -204,7 +204,7 @@ export default function SeasonalView() {
       <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
         <h2 className="text-base font-semibold text-slate-100 mb-3">Store Events</h2>
         {events.length === 0 ? (
-          <p className="text-sm text-slate-500">No events added yet. Click "Add Event" to get started.</p>
+          <p className="text-sm text-slate-400">No events added yet. Click "Add Event" to get started.</p>
         ) : (
           <div className="divide-y divide-slate-700/40">
             {events.map(event => (
@@ -218,12 +218,12 @@ export default function SeasonalView() {
                     <span className="font-medium text-sm text-slate-100">{event.name}</span>
                     <EventTypeBadge type={event.eventType} />
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-0.5">
                     {format(event.startDate, 'MMM d')} – {format(event.endDate, 'MMM d, yyyy')}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => setEditingEvent(event)} className="text-xs text-slate-500 hover:text-slate-400">Edit</button>
+                  <button onClick={() => setEditingEvent(event)} className="text-xs text-slate-400 hover:text-slate-200">Edit</button>
                   <button onClick={() => deleteEvent(event)} className="text-xs text-red-400 hover:text-red-400">Delete</button>
                 </div>
               </div>
@@ -273,32 +273,32 @@ export default function SeasonalView() {
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-semibold text-sm text-slate-100">{impact.event.name}</span>
                       <EventTypeBadge type={impact.event.eventType} />
-                      <span className="text-xs text-slate-500 ml-auto">
+                      <span className="text-xs text-slate-400 ml-auto">
                         {format(impact.event.startDate, 'MMM d')} – {format(impact.event.endDate, 'MMM d')}
                       </span>
                     </div>
                     <div className="flex gap-6 flex-wrap">
                       <div>
-                        <p className="text-xs text-slate-500">Total Revenue</p>
+                        <p className="text-xs text-slate-400">Total Revenue</p>
                         <p className="font-bold text-sm text-slate-100">{formatCurrency(impact.totalRevenueDuring)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">vs Baseline</p>
+                        <p className="text-xs text-slate-400">vs Baseline</p>
                         <p className="font-bold text-sm" style={{ color: upliftColor }}>
                           {upliftSign}{impact.upliftPct.toFixed(1)}%
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Avg Daily During</p>
+                        <p className="text-xs text-slate-400">Avg Daily During</p>
                         <p className="font-mono text-sm text-slate-300">{formatCurrency(impact.avgDailyRevenueDuring)}/day</p>
                       </div>
                       <div>
-                        <p className="text-xs text-slate-500">Avg Daily Baseline</p>
+                        <p className="text-xs text-slate-400">Avg Daily Baseline</p>
                         <p className="font-mono text-sm text-slate-300">{formatCurrency(impact.avgDailyRevenueBefore)}/day</p>
                       </div>
                       {impact.topProducts.length > 0 && (
                         <div>
-                          <p className="text-xs text-slate-500">Top Products</p>
+                          <p className="text-xs text-slate-400">Top Products</p>
                           <p className="text-sm text-slate-300">{impact.topProducts.map(p => `${p.name} (${p.qty})`).join(', ')}</p>
                         </div>
                       )}

@@ -268,7 +268,7 @@ export default function SquareSyncView() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-semibold text-slate-200">Auto-Sync</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Sync automatically in the background</p>
+              <p className="text-xs text-slate-400 mt-0.5">Sync automatically in the background</p>
             </div>
             <button
               onClick={() => store.setCredentials({ autoSyncEnabled: !store.autoSyncEnabled })}
@@ -309,13 +309,13 @@ export default function SquareSyncView() {
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-slate-200">Sync Now</h2>
             {store.lastSyncDate && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 Last: {new Date(store.lastSyncDate).toLocaleString()} · {formatNumber(store.lastSyncCount)} added
               </p>
             )}
           </div>
           {syncing && syncStatus && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex items-center gap-2 text-sm text-slate-400">
               <div className="w-3.5 h-3.5 border-2 border-slate-600 border-t-teal-400 rounded-full animate-spin shrink-0" />
               {syncStatus.message}
             </div>

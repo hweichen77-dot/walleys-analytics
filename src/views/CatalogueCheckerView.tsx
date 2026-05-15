@@ -161,7 +161,7 @@ export default function CatalogueCheckerView() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-100">Catalogue Checker</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-sm text-slate-400 mt-0.5">
             Audits {catalogue.length} variations across your catalogue for errors and data quality issues.
           </p>
         </div>
@@ -214,7 +214,7 @@ export default function CatalogueCheckerView() {
             </svg>
           </div>
           <p className="font-semibold text-slate-200 text-lg">Catalogue looks clean!</p>
-          <p className="text-sm text-slate-500 mt-1">No errors, warnings, or issues found.</p>
+          <p className="text-sm text-slate-400 mt-1">No errors, warnings, or issues found.</p>
         </div>
       )}
 
@@ -224,7 +224,7 @@ export default function CatalogueCheckerView() {
           {/* Filter label */}
           {filter !== 'all' && (
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs text-slate-500">Showing {filter}s only · {visibleIssues.length} issues across {itemGroups.length} items</p>
+              <p className="text-xs text-slate-400">Showing {filter}s only · {visibleIssues.length} issues across {itemGroups.length} items</p>
               <button onClick={() => setFilter('all')} className="text-xs text-teal-400 hover:underline cursor-pointer">Show all</button>
             </div>
           )}
@@ -278,7 +278,7 @@ export default function CatalogueCheckerView() {
                                 {issue.issue}
                               </span>
                               {/\(.+\)$/.test(issue.productName) && (
-                                <span className="text-[11px] text-slate-500">
+                                <span className="text-[11px] text-slate-400">
                                   {splitItemVariation(issue.productName).variationName} variation
                                 </span>
                               )}
@@ -294,7 +294,7 @@ export default function CatalogueCheckerView() {
                                 Auto-fix
                               </button>
                             ) : (
-                              <span className="text-[10px] text-slate-600 px-2">Manual</span>
+                              <span className="text-[10px] text-slate-400 px-2">Manual</span>
                             )}
                           </div>
                         </div>
@@ -310,7 +310,7 @@ export default function CatalogueCheckerView() {
 
       {/* No matches */}
       {visibleIssues.length === 0 && issues.length > 0 && (
-        <div className="text-center py-10 text-slate-500 text-sm">
+        <div className="text-center py-10 text-slate-400 text-sm">
           No {filter}s found.{' '}
           <button onClick={() => setFilter('all')} className="text-teal-400 hover:underline cursor-pointer">Show all issues</button>
         </div>

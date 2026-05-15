@@ -146,7 +146,7 @@ export default function ProductDetailView() {
 
   if (!stats) {
     return (
-      <div className="py-20 text-center text-slate-500">
+      <div className="py-20 text-center text-slate-400">
         <p>Product not found.</p>
         <button onClick={() => navigate('/inventory')} className="mt-3 text-teal-400 text-sm underline">← Back</button>
       </div>
@@ -191,7 +191,7 @@ export default function ProductDetailView() {
           <div className="flex gap-1">
             {(['Daily', 'Weekly', 'Monthly'] as const).map(g => (
               <button key={g} onClick={() => setGranularity(g)}
-                className={`px-2.5 py-1 text-xs rounded-lg font-medium ${granularity === g ? 'bg-teal-500 text-slate-950' : 'text-slate-500 hover:bg-slate-700'}`}>
+                className={`px-2.5 py-1 text-xs rounded-lg font-medium ${granularity === g ? 'bg-teal-500 text-slate-950' : 'text-slate-400 hover:bg-slate-700'}`}>
                 {g}
               </button>
             ))}
@@ -202,11 +202,11 @@ export default function ProductDetailView() {
         <div className="bg-slate-900/50 rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-4">
             <span className="text-xs font-medium text-slate-400">Revenue</span>
-            <span className="flex items-center gap-1 text-xs text-slate-500">
+            <span className="flex items-center gap-1 text-xs text-slate-400">
               <span className="inline-block w-4 h-0.5 bg-teal-400 rounded" />Revenue
             </span>
             {maData.length > 0 && (
-              <span className="flex items-center gap-1 text-xs text-slate-500">
+              <span className="flex items-center gap-1 text-xs text-slate-400">
                 <span className="inline-block w-4 h-0.5 bg-orange-400 rounded" style={{ borderTop: '1.5px dashed' }} />3-period avg
               </span>
             )}
@@ -292,14 +292,14 @@ export default function ProductDetailView() {
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-700/50 flex items-center justify-between">
           <h2 className="font-semibold text-slate-200">Transaction History</h2>
-          <span className="text-xs text-slate-500">{txRows.length} total</span>
+          <span className="text-xs text-slate-400">{txRows.length} total</span>
         </div>
         {txRows.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 text-sm">No transactions found.</div>
+          <div className="py-12 text-center text-slate-400 text-sm">No transactions found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-900 text-slate-500 uppercase text-xs">
+              <thead className="bg-slate-900 text-slate-400 uppercase text-xs">
                 <tr>
                   <SortTh label="Date" field="dateDesc" altField="dateAsc" sort={txSort} onSort={setTxSort} />
                   <th className="px-4 py-2 text-left">Time</th>
@@ -319,7 +319,7 @@ export default function ProductDetailView() {
                     <td className="px-4 py-2 text-right tabular-nums">{formatCurrency(tx.unitPrice)}</td>
                     <td className="px-4 py-2 text-right font-medium tabular-nums">{formatCurrency(tx.total)}</td>
                     <td className="px-4 py-2 text-slate-400">{tx.staffName}</td>
-                    <td className="px-4 py-2 text-slate-500">{tx.paymentMethod || '—'}</td>
+                    <td className="px-4 py-2 text-slate-400">{tx.paymentMethod || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -341,11 +341,11 @@ export default function ProductDetailView() {
 function KpiCard({ icon: _icon, title, value, sub }: { icon: string; title: string; value: string; sub?: string }) {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 space-y-1">
-      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+      <div className="flex items-center gap-1.5 text-xs text-slate-400">
         {title}
       </div>
       <div className="text-lg font-semibold text-slate-100 tabular-nums">{value}</div>
-      {sub && <div className="text-xs text-slate-500">{sub}</div>}
+      {sub && <div className="text-xs text-slate-400">{sub}</div>}
     </div>
   )
 }
@@ -353,7 +353,7 @@ function KpiCard({ icon: _icon, title, value, sub }: { icon: string; title: stri
 function MonthOverMonthCard({ pct }: { pct: number | null }) {
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-3 space-y-1">
-      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+      <div className="flex items-center gap-1.5 text-xs text-slate-400">
         This vs Last Month
       </div>
       {pct !== null ? (
@@ -361,7 +361,7 @@ function MonthOverMonthCard({ pct }: { pct: number | null }) {
           {pct >= 0 ? '↑' : '↓'}{Math.abs(pct).toFixed(0)}%
         </div>
       ) : (
-        <div className="text-lg font-semibold text-slate-500">N/A</div>
+        <div className="text-lg font-semibold text-slate-400">N/A</div>
       )}
     </div>
   )
@@ -371,7 +371,7 @@ function PatternIndicator({ icon: _icon, title, value, color = '#e2e8f0' }: { ic
   return (
     <div className="flex items-start gap-3">
       <div>
-        <div className="text-xs text-slate-500">{title}</div>
+        <div className="text-xs text-slate-400">{title}</div>
         <div className="text-sm font-semibold" style={{ color }}>{value}</div>
       </div>
     </div>

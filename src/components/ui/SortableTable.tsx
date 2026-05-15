@@ -53,7 +53,7 @@ export function SortableTable<T>({
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-slate-900/70 text-slate-500 uppercase text-[10px] tracking-wider">
+        <thead className="bg-slate-900/70 text-slate-400 uppercase text-[10px] tracking-wider">
           <tr>
             {columns.map(col => (
               <th
@@ -82,7 +82,7 @@ export function SortableTable<T>({
         </tbody>
       </table>
       {displayed.length === 0 && (
-        <div className="text-center py-10 text-slate-600 text-sm">No data to display.</div>
+        <div className="text-center py-10 text-slate-400 text-sm">No data to display.</div>
       )}
     </div>
   )

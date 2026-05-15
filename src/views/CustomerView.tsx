@@ -196,7 +196,7 @@ export default function CustomerView() {
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
           <p className="text-4xl mb-3">🙅</p>
           <h2 className="text-lg font-semibold text-slate-100 mb-2">No Customer IDs Found</h2>
-          <p className="text-sm text-slate-500 max-w-md mx-auto">
+          <p className="text-sm text-slate-400 max-w-md mx-auto">
             Customer IDs are found in Square CSV exports when customers have accounts.
             Cash and guest transactions won't have IDs.
           </p>
@@ -208,25 +208,25 @@ export default function CustomerView() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-slate-100">Customer Frequency</h1>
-      <p className="text-sm text-slate-500 -mt-4">{identifiedPct}% of transactions have customer data</p>
+      <p className="text-sm text-slate-400 -mt-4">{identifiedPct}% of transactions have customer data</p>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Identified Customers</p>
+          <p className="text-xs text-slate-400">Identified Customers</p>
           <p className="text-xl font-bold text-slate-100 mt-1">{profiles.length}</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Repeat Customers</p>
+          <p className="text-xs text-slate-400">Repeat Customers</p>
           <p className="text-xl font-bold text-slate-100 mt-1">
             {repeatCustomers} ({profiles.length ? Math.round(repeatCustomers / profiles.length * 100) : 0}%)
           </p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Avg Lifetime Value</p>
+          <p className="text-xs text-slate-400">Avg Lifetime Value</p>
           <p className="text-xl font-bold text-slate-100 mt-1 font-mono">{formatCurrency(avgCLV)}</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Avg Transactions</p>
+          <p className="text-xs text-slate-400">Avg Transactions</p>
           <p className="text-xl font-bold text-slate-100 mt-1">
             {profiles.length ? (profiles.reduce((s, p) => s + p.transactionCount, 0) / profiles.length).toFixed(1) : '—'}
           </p>
@@ -245,7 +245,7 @@ export default function CustomerView() {
           </div>
           <div className="text-right shrink-0">
             <p className="text-2xl font-mono font-bold text-teal-400">{pareto.pct.toFixed(0)}%</p>
-            <p className="text-[10px] text-slate-500">from top {Math.round((pareto.count / pareto.total) * 100)}%</p>
+            <p className="text-[10px] text-slate-400">from top {Math.round((pareto.count / pareto.total) * 100)}%</p>
           </div>
         </div>
       )}
@@ -265,10 +265,10 @@ export default function CustomerView() {
               >
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className="w-2 h-2 rounded-full" style={{ backgroundColor: SEGMENT_COLOR[seg] }} />
-                  <span className="text-xs text-slate-500">{seg}</span>
+                  <span className="text-xs text-slate-400">{seg}</span>
                 </div>
                 <p className="text-xl font-bold text-slate-100">{count}</p>
-                <p className="text-xs text-slate-500">{pct}% · {formatCurrency(rev)}</p>
+                <p className="text-xs text-slate-400">{pct}% · {formatCurrency(rev)}</p>
               </button>
             )
           })}
@@ -288,7 +288,7 @@ export default function CustomerView() {
       {retention.length > 0 && (
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
           <h2 className="text-base font-semibold text-slate-100 mb-1">Retention Curve</h2>
-          <p className="text-xs text-slate-500 mb-4">
+          <p className="text-xs text-slate-400 mb-4">
             Of customers who first purchased in a given month, what % returned the next month.
           </p>
           <ResponsiveContainer width="100%" height={160}>
@@ -330,7 +330,7 @@ export default function CustomerView() {
             <thead className="sticky top-0 bg-slate-900 border-b border-slate-700/50">
               <tr>
                 {['Name', 'Segment', 'Transactions', 'Total Spent', 'Avg Tx', 'Annual LTV', 'First', 'Last', 'Days Since', 'Fav Product'].map(h => (
-                  <th key={h} className="px-4 py-2.5 font-semibold text-slate-500 text-left">{h}</th>
+                  <th key={h} className="px-4 py-2.5 font-semibold text-slate-400 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -365,7 +365,7 @@ export default function CustomerView() {
                   <td className="px-4 py-2 font-mono" style={{ color: p.daysSinceLastVisit > 60 ? '#dc2626' : p.daysSinceLastVisit > 30 ? '#f97316' : '#374151' }}>
                     {p.daysSinceLastVisit}
                   </td>
-                  <td className="px-4 py-2 text-slate-500 truncate max-w-32">{p.favoriteProduct}</td>
+                  <td className="px-4 py-2 text-slate-400 truncate max-w-32">{p.favoriteProduct}</td>
                 </tr>
               ))}
             </tbody>
@@ -383,7 +383,7 @@ export default function CustomerView() {
                 {selectedCustomer.segment}
               </span>
             </div>
-            <button onClick={() => setSelectedCustomer(null)} className="text-slate-500 hover:text-slate-400 text-lg">×</button>
+            <button onClick={() => setSelectedCustomer(null)} className="text-slate-400 hover:text-slate-200 text-lg">×</button>
           </div>
           <div className="grid grid-cols-4 gap-4 mb-5">
             {[
@@ -393,7 +393,7 @@ export default function CustomerView() {
               { label: 'Favorite Product', value: selectedCustomer.favoriteProduct },
             ].map(c => (
               <div key={c.label}>
-                <p className="text-xs text-slate-500">{c.label}</p>
+                <p className="text-xs text-slate-400">{c.label}</p>
                 <p className="font-semibold text-sm text-slate-100 mt-0.5">{c.value}</p>
               </div>
             ))}

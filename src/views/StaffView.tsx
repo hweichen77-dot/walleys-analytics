@@ -91,15 +91,15 @@ export default function StaffView() {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Staff Members</p>
+          <p className="text-xs text-slate-400">Staff Members</p>
           <p className="text-xl font-bold text-slate-100 mt-1">{staffStats.length}</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Total Revenue</p>
+          <p className="text-xs text-slate-400">Total Revenue</p>
           <p className="text-xl font-bold text-slate-100 mt-1">{formatCurrency(totalRevenue)}</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-          <p className="text-xs text-slate-500">Total Transactions</p>
+          <p className="text-xs text-slate-400">Total Transactions</p>
           <p className="text-xl font-bold text-slate-100 mt-1">{formatNumber(transactions.length)}</p>
         </div>
       </div>
@@ -109,20 +109,20 @@ export default function StaffView() {
         <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-slate-100">Staff ROI</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Hours estimated from first → last transaction per shift. Enter wage to see net ROI.</p>
+            <p className="text-xs text-slate-400 mt-0.5">Hours estimated from first → last transaction per shift. Enter wage to see net ROI.</p>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-700/50 text-left">
-                <th className="px-5 py-3 text-xs font-semibold text-slate-500">Staff</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 text-right">Revenue</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 text-right">Est. Hours</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 text-right">Rev/hr</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 text-center">Wage/hr</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 text-right">Wage Cost</th>
-                <th className="px-4 py-3 text-xs font-semibold text-slate-500 text-right">Net ROI</th>
+                <th className="px-5 py-3 text-xs font-semibold text-slate-400">Staff</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 text-right">Revenue</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 text-right">Est. Hours</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 text-right">Rev/hr</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 text-center">Wage/hr</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 text-right">Wage Cost</th>
+                <th className="px-4 py-3 text-xs font-semibold text-slate-400 text-right">Net ROI</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/30">
@@ -156,13 +156,13 @@ export default function StaffView() {
                             placeholder="0.00"
                           />
                           <button type="submit" className="text-xs text-teal-400 hover:text-teal-300 px-1">✓</button>
-                          <button type="button" onClick={() => setEditingWage(null)} className="text-xs text-slate-500 hover:text-slate-300">✕</button>
+                          <button type="button" onClick={() => setEditingWage(null)} className="text-xs text-slate-400 hover:text-slate-300">✕</button>
                         </form>
                       ) : (
                         <button
                           onClick={() => { setEditingWage(s.name); setWageInput(s.wage?.toString() ?? '') }}
                           className={`font-mono text-xs px-2 py-0.5 border border-transparent hover:border-slate-600 hover:bg-slate-700/40 rounded ${
-                            s.wage != null ? 'text-slate-300' : 'text-slate-600 hover:text-slate-400'
+                            s.wage != null ? 'text-slate-300' : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
                           {s.wage != null ? `$${s.wage.toFixed(2)}` : '+ Add'}
@@ -178,7 +178,7 @@ export default function StaffView() {
                           {formatCurrency(s.netROI)}
                         </span>
                       ) : (
-                        <span className="text-slate-600 text-xs">enter wage</span>
+                        <span className="text-slate-400 text-xs">enter wage</span>
                       )}
                     </td>
                   </tr>
@@ -214,7 +214,7 @@ export default function StaffView() {
       <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-700/50">
           <h2 className="text-base font-semibold text-slate-100">Staff Breakdown</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Click a row to see individual transactions</p>
+          <p className="text-xs text-slate-400 mt-0.5">Click a row to see individual transactions</p>
         </div>
         <div className="divide-y divide-slate-700/40">
           {staffStats.map((staff, idx) => {
@@ -240,7 +240,7 @@ export default function StaffView() {
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-slate-100 text-sm">{staff.name}</p>
                       {staff.name === 'Unknown' && (
-                        <span className="text-xs px-1.5 py-0.5 bg-slate-800 text-slate-500 rounded-full">no name in CSV</span>
+                        <span className="text-xs px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded-full">no name in CSV</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-1">
@@ -250,49 +250,49 @@ export default function StaffView() {
                           style={{ width: `${share}%`, opacity: 0.7 }}
                         />
                       </div>
-                      <span className="text-xs text-slate-500">{share.toFixed(1)}% of revenue</span>
+                      <span className="text-xs text-slate-400">{share.toFixed(1)}% of revenue</span>
                     </div>
                   </div>
 
                   {/* Stats */}
                   <div className="hidden sm:flex items-center gap-8 shrink-0">
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Transactions</p>
+                      <p className="text-xs text-slate-400">Transactions</p>
                       <p className="font-mono font-semibold text-sm text-slate-100">{formatNumber(staff.transactionCount)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Total Sales</p>
+                      <p className="text-xs text-slate-400">Total Sales</p>
                       <p className="font-mono font-semibold text-sm text-slate-100">{formatCurrency(staff.totalSales)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Avg Sale</p>
+                      <p className="text-xs text-slate-400">Avg Sale</p>
                       <p className="font-mono text-sm text-slate-300">{formatCurrency(avg)}</p>
                     </div>
                   </div>
 
                   {/* Expand chevron */}
-                  <span className="text-slate-500 text-sm shrink-0">{isExpanded ? '▲' : '▼'}</span>
+                  <span className="text-slate-400 text-sm shrink-0">{isExpanded ? '▲' : '▼'}</span>
                 </button>
 
                 {/* Expanded transactions */}
                 {isExpanded && (
                   <div className="border-t border-slate-700/50 bg-slate-900">
                     <div className="px-5 py-3">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
                         Recent Transactions — {staff.name}
                       </p>
                       {staffTxs.length === 0 ? (
-                        <p className="text-xs text-slate-500">No transactions found.</p>
+                        <p className="text-xs text-slate-400">No transactions found.</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
                               <tr className="border-b border-slate-700 text-left">
-                                <th className="pb-2 font-semibold text-slate-500">Date</th>
-                                <th className="pb-2 font-semibold text-slate-500">Staff</th>
-                                <th className="pb-2 font-semibold text-slate-500">Items</th>
-                                <th className="pb-2 font-semibold text-slate-500 text-right">Amount</th>
-                                <th className="pb-2 font-semibold text-slate-500">Payment</th>
+                                <th className="pb-2 font-semibold text-slate-400">Date</th>
+                                <th className="pb-2 font-semibold text-slate-400">Staff</th>
+                                <th className="pb-2 font-semibold text-slate-400">Items</th>
+                                <th className="pb-2 font-semibold text-slate-400 text-right">Amount</th>
+                                <th className="pb-2 font-semibold text-slate-400">Payment</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -304,13 +304,13 @@ export default function StaffView() {
                                   </td>
                                   <td className="py-1.5 text-slate-400 max-w-56 truncate">{tx.itemDescription || '—'}</td>
                                   <td className="py-1.5 font-mono font-semibold text-slate-100 text-right">{formatCurrency(tx.netSales)}</td>
-                                  <td className="py-1.5 text-slate-500">{tx.paymentMethod || '—'}</td>
+                                  <td className="py-1.5 text-slate-400">{tx.paymentMethod || '—'}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                           {staffTxs.length > 20 && (
-                            <p className="text-xs text-slate-500 mt-2">Showing 20 of {staffTxs.length} transactions.</p>
+                            <p className="text-xs text-slate-400 mt-2">Showing 20 of {staffTxs.length} transactions.</p>
                           )}
                         </div>
                       )}

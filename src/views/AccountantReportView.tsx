@@ -50,7 +50,7 @@ function MetricRow({ label, value, sub, highlight }: { label: string; value: str
       <span className={`text-sm ${highlight ? 'text-slate-100' : 'text-slate-400'}`}>{label}</span>
       <div className="text-right">
         <span className={`text-sm ${highlight ? 'text-slate-100' : 'text-slate-200'}`}>{value}</span>
-        {sub && <p className="text-xs text-slate-500">{sub}</p>}
+        {sub && <p className="text-xs text-slate-400">{sub}</p>}
       </div>
     </div>
   )
@@ -162,7 +162,7 @@ export default function AccountantReportView() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-100">Accountant Report</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-400 mt-1">
             One-click PDF summary ready to hand to your accountant — revenue, COGS, margins, and payment breakdown.
           </p>
         </div>
@@ -206,7 +206,7 @@ export default function AccountantReportView() {
         {quick === 'custom' && (
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-xs text-slate-500 mb-1">Start</label>
+              <label className="block text-xs text-slate-400 mb-1">Start</label>
               <input
                 type="date"
                 value={customStart}
@@ -215,7 +215,7 @@ export default function AccountantReportView() {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs text-slate-500 mb-1">End</label>
+              <label className="block text-xs text-slate-400 mb-1">End</label>
               <input
                 type="date"
                 value={customEnd}
@@ -226,14 +226,14 @@ export default function AccountantReportView() {
           </div>
         )}
 
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-slate-400">
           {format(dates.start, 'MMMM d, yyyy')} — {format(dates.end, 'MMMM d, yyyy')}
         </div>
       </div>
 
       {/* No data state */}
       {transactions.length === 0 ? (
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center text-sm text-slate-500">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center text-sm text-slate-400">
           No transactions in this period.
         </div>
       ) : (
@@ -267,7 +267,7 @@ export default function AccountantReportView() {
                 </>
               )}
               {!hasCOGS && (
-                <p className="text-xs text-slate-500 mt-3">
+                <p className="text-xs text-slate-400 mt-3">
                   Import your Square catalog XLSX to include cost of goods and profit margins.
                 </p>
               )}
@@ -310,7 +310,7 @@ export default function AccountantReportView() {
                   <div key={p.method} className="flex items-center gap-3 py-1 border-b border-slate-700/40 last:border-0">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
                     <span className="text-sm text-slate-300 flex-1">{p.method}</span>
-                    <span className="text-xs text-slate-500 w-9 text-right">{p.pct.toFixed(0)}%</span>
+                    <span className="text-xs text-slate-400 w-9 text-right">{p.pct.toFixed(0)}%</span>
                     <span className="text-sm font-medium text-slate-100 w-24 text-right">{formatCurrency(p.revenue)}</span>
                   </div>
                 ))}
@@ -323,16 +323,16 @@ export default function AccountantReportView() {
             <div className="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden">
               <div className="px-5 py-4 border-b border-slate-700/50">
                 <h2 className="font-semibold text-slate-200">Top Products by Revenue</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Top 20 products in selected period</p>
+                <p className="text-xs text-slate-400 mt-0.5">Top 20 products in selected period</p>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-slate-900/60">
                     <tr>
-                      <th className="px-4 py-2.5 text-left text-slate-500 font-semibold">Product</th>
-                      <th className="px-4 py-2.5 text-right text-slate-500 font-semibold">Units</th>
-                      <th className="px-4 py-2.5 text-right text-slate-500 font-semibold">Revenue</th>
-                      {hasCOGS && <th className="px-4 py-2.5 text-right text-slate-500 font-semibold">Margin</th>}
+                      <th className="px-4 py-2.5 text-left text-slate-400 font-semibold">Product</th>
+                      <th className="px-4 py-2.5 text-right text-slate-400 font-semibold">Units</th>
+                      <th className="px-4 py-2.5 text-right text-slate-400 font-semibold">Revenue</th>
+                      {hasCOGS && <th className="px-4 py-2.5 text-right text-slate-400 font-semibold">Margin</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -345,7 +345,7 @@ export default function AccountantReportView() {
                           <td className="px-4 py-2 text-right font-mono">
                             {p.marginPct !== null
                               ? <span className={p.marginPct >= 40 ? 'text-emerald-400' : p.marginPct >= 20 ? 'text-amber-400' : 'text-red-400'}>{p.marginPct.toFixed(0)}%</span>
-                              : <span className="text-slate-600">—</span>}
+                              : <span className="text-slate-400">—</span>}
                           </td>
                         )}
                       </tr>
