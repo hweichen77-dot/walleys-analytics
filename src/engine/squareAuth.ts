@@ -189,28 +189,40 @@ export async function exchangeCodeForToken(code: string): Promise<void> {
 
 export async function refreshAccessToken(): Promise<void> {
   const { appID, appSecret, refreshToken } = useAuthStore.getState()
-  const res = await fetch(SQUARE_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id:     appID,
-      client_secret: appSecret,
-      grant_type:    'refresh_token',
+  if (!refreshToken) throw new Error('No refresh token available. Please reconnect to Square.')
+
+  let data: { access_token?: string; refresh_token?: string; expires_at?: string; error?: string; error_description?: string }
+
+  if (isTauri()) {
+    // Token endpoint doesn't support CORS — must go through Rust
+    const { invoke } = await import('@tauri-apps/api/core')
+    data = await invoke('refresh_square_token', {
+      app_id: appID,
+      app_secret: appSecret,
       refresh_token: refreshToken,
-    }),
-  })
+    })
+  } else {
+    const res = await fetch(SQUARE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id:     appID,
+        client_secret: appSecret,
+        grant_type:    'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    })
+    if (!res.ok) throw new Error(`Token refresh failed: ${res.status}`)
+    data = await res.json()
+  }
 
-  if (!res.ok) throw new Error(`Token refresh failed: ${res.status}`)
-
-  const data = await res.json() as {
-    access_token: string
-    refresh_token: string
-    expires_at: string
+  if (!data.access_token) {
+    throw new Error(data.error_description ?? data.error ?? 'Token refresh failed — please reconnect.')
   }
 
   useAuthStore.getState().setCredentials({
     accessToken:    data.access_token,
-    refreshToken:   data.refresh_token,
-    tokenExpiresAt: new Date(data.expires_at).getTime(),
+    refreshToken:   data.refresh_token ?? refreshToken,
+    tokenExpiresAt: data.expires_at ? new Date(data.expires_at).getTime() : 0,
   })
 }

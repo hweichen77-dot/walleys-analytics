@@ -1,16 +1,52 @@
 const BASE = 'https://connect.squareup.com/v2'
 
-function authHeaders(token: string): HeadersInit {
-  return {
+function isTauri(): boolean {
+  return (window as any).__TAURI_INTERNALS__ !== undefined
+}
+
+/**
+ * All Square API calls go through this function.
+ * In Tauri: routed via Rust/reqwest to avoid any webview CORS edge cases.
+ * In browser: standard fetch with correct headers.
+ */
+async function squareRequest(
+  token: string,
+  method: 'GET' | 'POST',
+  url: string,
+  body?: unknown,
+): Promise<unknown> {
+  if (isTauri()) {
+    const { invoke } = await import('@tauri-apps/api/core')
+    const text = await invoke<string>('proxy_square_api', {
+      access_token: token,
+      method,
+      url,
+      body: body ? JSON.stringify(body) : null,
+    })
+    return JSON.parse(text)
+  }
+
+  const headers: Record<string, string> = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
     'Square-Version': '2023-10-18',
   }
+  const res = await fetch(url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Square API error ${res.status}: ${text}`)
+  }
+  return res.json()
 }
 
 export interface SquareLocation {
   id: string
   name: string
+  address?: { address_line_1?: string; locality?: string }
 }
 
 export interface SquareOrderLineItem {
@@ -69,9 +105,7 @@ export interface SquareInventoryCount {
 }
 
 export async function fetchLocations(token: string): Promise<SquareLocation[]> {
-  const res = await fetch(`${BASE}/locations`, { headers: authHeaders(token) })
-  if (!res.ok) throw new Error(`fetchLocations failed: ${res.status}`)
-  const data = await res.json() as { locations: SquareLocation[] }
+  const data = await squareRequest(token, 'GET', `${BASE}/locations`) as { locations?: SquareLocation[] }
   return data.locations ?? []
 }
 
@@ -103,13 +137,10 @@ export async function fetchOrders(
     }
     if (cursor) body.cursor = cursor
 
-    const res = await fetch(`${BASE}/orders/search`, {
-      method: 'POST',
-      headers: authHeaders(token),
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) throw new Error(`fetchOrders failed: ${res.status}`)
-    const data = await res.json() as { orders?: SquareOrder[]; cursor?: string }
+    const data = await squareRequest(token, 'POST', `${BASE}/orders/search`, body) as {
+      orders?: SquareOrder[]
+      cursor?: string
+    }
     orders.push(...(data.orders ?? []))
     cursor = data.cursor
   } while (cursor)
@@ -127,9 +158,10 @@ export async function fetchCatalogue(token: string): Promise<SquareCatalogItem[]
     url.searchParams.set('types', 'ITEM,CATEGORY')
     if (cursor) url.searchParams.set('cursor', cursor)
 
-    const res = await fetch(url.toString(), { headers: authHeaders(token) })
-    if (!res.ok) throw new Error(`fetchCatalogue failed: ${res.status}`)
-    const data = await res.json() as { objects?: SquareCatalogItem[]; cursor?: string }
+    const data = await squareRequest(token, 'GET', url.toString()) as {
+      objects?: SquareCatalogItem[]
+      cursor?: string
+    }
     items.push(...(data.objects ?? []))
     cursor = data.cursor
   } while (cursor)
@@ -148,13 +180,10 @@ export async function fetchInventory(token: string, locationID: string): Promise
     }
     if (cursor) body.cursor = cursor
 
-    const res = await fetch(`${BASE}/inventory/counts/batch-retrieve`, {
-      method: 'POST',
-      headers: authHeaders(token),
-      body: JSON.stringify(body),
-    })
-    if (!res.ok) throw new Error(`fetchInventory failed: ${res.status}`)
-    const data = await res.json() as { counts?: SquareInventoryCount[]; cursor?: string }
+    const data = await squareRequest(token, 'POST', `${BASE}/inventory/counts/batch-retrieve`, body) as {
+      counts?: SquareInventoryCount[]
+      cursor?: string
+    }
     counts.push(...(data.counts ?? []))
     cursor = data.cursor
   } while (cursor)

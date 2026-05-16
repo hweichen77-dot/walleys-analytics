@@ -21,6 +21,7 @@ export default function SquareSyncView() {
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([])
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [syncLog, setSyncLog] = useState<string[]>([])
   const [syncResult, setSyncResult] = useState<{ ok: boolean; message: string; detail?: string } | null>(null)
   const [connState, setConnState] = useState<ConnectionState>(store.accessToken ? 'connected' : 'disconnected')
 
@@ -78,18 +79,29 @@ export default function SquareSyncView() {
     if (!store.locationID) { show('Select a location first', 'error'); return }
     setSyncing(true)
     setSyncResult(null)
+    setSyncLog([])
+    const log: string[] = []
+    const ts = () => new Date().toLocaleTimeString()
     try {
       let lastStatus: SyncStatus | null = null
-      await runSquareSync(status => { setSyncStatus(status); lastStatus = status })
-      setSyncResult({
-        ok: true,
-        message: 'Sync succeeded',
-        detail: lastStatus
-          ? `${(lastStatus as SyncStatus).ordersAdded} orders · ${(lastStatus as SyncStatus).productsAdded} products synced`
-          : undefined,
+      await runSquareSync(status => {
+        setSyncStatus(status)
+        lastStatus = status
+        const entry = `[${ts()}] ${status.message}`
+        log.push(entry)
+        setSyncLog([...log])
       })
+      const detail = lastStatus
+        ? `${(lastStatus as SyncStatus).ordersAdded} new orders · ${(lastStatus as SyncStatus).productsAdded} catalogue items`
+        : 'Done'
+      setSyncResult({ ok: true, message: 'Sync complete', detail })
+      log.push(`[${ts()}] Done — ${detail}`)
+      setSyncLog([...log])
     } catch (e) {
-      setSyncResult({ ok: false, message: 'Sync failed', detail: (e as Error).message })
+      const msg = (e as Error).message
+      setSyncResult({ ok: false, message: 'Sync failed', detail: msg })
+      log.push(`[${ts()}] ERROR: ${msg}`)
+      setSyncLog([...log])
     } finally {
       setSyncing(false)
     }
@@ -120,8 +132,11 @@ export default function SquareSyncView() {
   }[connState]
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <h1 className="text-xl font-bold text-slate-100">Square Sync</h1>
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h1 className="text-xl font-bold text-slate-100">Square Sync</h1>
+        <p className="text-sm text-slate-400 mt-1">Automatically import orders and catalogue data from your Square account.</p>
+      </div>
 
       {!isConnected && (
         <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl px-4 py-3 flex items-start gap-3">
@@ -349,6 +364,13 @@ export default function SquareSyncView() {
           >
             {syncing ? 'Syncing…' : 'Start Sync'}
           </button>
+          {syncLog.length > 0 && (
+            <div className="mt-3 bg-slate-900 border border-slate-700 rounded-lg p-3 font-mono text-xs text-slate-300 max-h-36 overflow-y-auto space-y-0.5">
+              {syncLog.map((line, i) => (
+                <p key={i} className={line.includes('ERROR') ? 'text-red-400' : 'text-slate-300'}>{line}</p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

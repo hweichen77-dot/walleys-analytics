@@ -87,6 +87,14 @@ export function isSlowMover(stats: ProductStats): boolean {
   return daysSinceLast > 30
 }
 
+// Items that aren't real products — custom amounts, modifiers, voided lines.
+// Filtering these prevents them from polluting product analytics.
+const SKIP_ITEM_PATTERN = /^(custom amount|custom amt|custom price|open amount|variable price|modifier|fee|tip|service charge|gift card|discount)$/i
+
+function isAnalyticsItem(name: string): boolean {
+  return !SKIP_ITEM_PATTERN.test(name.trim())
+}
+
 export function computeProductStats(
   transactions: SalesTransaction[],
   overrides: Record<string, string> = {},
@@ -94,7 +102,7 @@ export function computeProductStats(
   const statsMap = new Map<string, ProductStats>()
 
   for (const tx of transactions) {
-    const items = parseProductItems(tx.itemDescription)
+    const items = parseProductItems(tx.itemDescription).filter(i => isAnalyticsItem(i.name))
     const totalQty = items.reduce((s, i) => s + i.qty, 0)
     const revenuePerUnit = tx.netSales / Math.max(totalQty, 1)
     const monthKey = format(tx.date, 'yyyy-MM')

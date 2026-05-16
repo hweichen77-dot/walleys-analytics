@@ -48,7 +48,7 @@ export function TopProductsChart({ products }: TopProductsChartProps) {
       </div>
       <ResponsiveContainer width="100%" height={280}>
         <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
-          <XAxis type="number" tick={{ fontSize: 10, fill: '#64748B' }} axisLine={false} tickLine={false}
+          <XAxis type="number" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false}
             tickFormatter={v => mode === 'revenue' ? `$${v}` : String(v)} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#94A3B8' }} width={120} axisLine={false} tickLine={false} />
           <Tooltip

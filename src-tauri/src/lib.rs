@@ -1,5 +1,6 @@
 use std::net::TcpListener;
 use std::sync::Mutex;
+use serde_json::Value;
 
 /// Holds the bound listener across two Tauri commands.
 struct OAuthListener(Mutex<Option<TcpListener>>);
@@ -21,7 +22,6 @@ fn prepare_oauth_listener(state: tauri::State<'_, OAuthListener>) -> Result<u16,
 }
 
 /// Step 2 — wait until Square redirects to localhost and return the auth code.
-/// Uses spawn_blocking so the blocking accept/read don't stall Tokio's async workers.
 #[tauri::command]
 async fn wait_for_oauth_code(state: tauri::State<'_, OAuthListener>) -> Result<String, String> {
     let listener = state.0.lock().unwrap().take()
@@ -37,7 +37,6 @@ async fn wait_for_oauth_code(state: tauri::State<'_, OAuthListener>) -> Result<S
         let n = stream.read(&mut buf).map_err(|e| format!("Read failed: {e}"))?;
         let raw = String::from_utf8_lossy(&buf[..n]);
 
-        // First line: "GET /square/callback?code=XXX&state=YYY HTTP/1.1"
         let first_line = raw.lines().next().unwrap_or("");
         let path = first_line.split_whitespace().nth(1).unwrap_or("");
 
@@ -50,7 +49,6 @@ async fn wait_for_oauth_code(state: tauri::State<'_, OAuthListener>) -> Result<S
                     .map(|p| url_decode(&p["code=".len()..]))
             })
             .ok_or_else(|| {
-                // Return a helpful error if Square sent an error instead of a code
                 let error_param = path.split('?').nth(1).and_then(|qs| {
                     qs.split('&')
                         .find(|p| p.starts_with("error="))
@@ -78,15 +76,15 @@ async fn wait_for_oauth_code(state: tauri::State<'_, OAuthListener>) -> Result<S
     .map_err(|e| format!("Thread join error: {e}"))?
 }
 
-/// Step 3 — exchange the authorization code for tokens via Rust's HTTP client.
-/// This bypasses the webview's CORS restrictions (Square's token endpoint is server-to-server only).
+/// Exchange an authorization code for tokens.
+/// Goes through Rust/reqwest to bypass CORS (Square's token endpoint is server-to-server only).
 #[tauri::command]
 async fn exchange_square_code(
     code: String,
     app_id: String,
     app_secret: String,
     redirect_uri: String,
-) -> Result<serde_json::Value, String> {
+) -> Result<Value, String> {
     let client = reqwest::Client::new();
     let body = serde_json::json!({
         "client_id":     app_id,
@@ -99,16 +97,86 @@ async fn exchange_square_code(
     let res = client
         .post("https://connect.squareup.com/oauth2/token")
         .header("Content-Type", "application/json")
-        .header("Square-Version", "2024-01-18")
+        .header("Square-Version", "2023-10-18")
         .json(&body)
         .send()
         .await
         .map_err(|e| format!("Request failed: {e}"))?;
 
-    let data: serde_json::Value = res.json().await
+    let data: Value = res.json().await
         .map_err(|e| format!("Failed to parse response: {e}"))?;
 
     Ok(data)
+}
+
+/// Refresh an existing access token.
+/// Goes through Rust/reqwest to bypass CORS (same server-to-server restriction as token exchange).
+#[tauri::command]
+async fn refresh_square_token(
+    app_id: String,
+    app_secret: String,
+    refresh_token: String,
+) -> Result<Value, String> {
+    let client = reqwest::Client::new();
+    let body = serde_json::json!({
+        "client_id":     app_id,
+        "client_secret": app_secret,
+        "grant_type":    "refresh_token",
+        "refresh_token": refresh_token,
+    });
+
+    let res = client
+        .post("https://connect.squareup.com/oauth2/token")
+        .header("Content-Type", "application/json")
+        .header("Square-Version", "2023-10-18")
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {e}"))?;
+
+    let data: Value = res.json().await
+        .map_err(|e| format!("Failed to parse response: {e}"))?;
+
+    Ok(data)
+}
+
+/// Generic proxy for Square API calls.
+/// Routes all Square API traffic through Rust/reqwest for reliability and to avoid
+/// any webview CORS edge cases.
+#[tauri::command]
+async fn proxy_square_api(
+    access_token: String,
+    method: String,
+    url: String,
+    body: Option<String>,
+) -> Result<String, String> {
+    let client = reqwest::Client::new();
+
+    let mut req = match method.to_uppercase().as_str() {
+        "POST" => client.post(&url),
+        "PUT"  => client.put(&url),
+        "DELETE" => client.delete(&url),
+        _ => client.get(&url),
+    };
+
+    req = req
+        .header("Authorization", format!("Bearer {access_token}"))
+        .header("Content-Type", "application/json")
+        .header("Square-Version", "2023-10-18");
+
+    if let Some(b) = body {
+        req = req.body(b);
+    }
+
+    let res = req.send().await.map_err(|e| format!("Request failed: {e}"))?;
+    let status = res.status().as_u16();
+    let text = res.text().await.map_err(|e| format!("Read body failed: {e}"))?;
+
+    if status >= 400 {
+        return Err(format!("Square API error {status}: {text}"));
+    }
+
+    Ok(text)
 }
 
 fn url_decode(s: &str) -> String {
@@ -141,6 +209,8 @@ pub fn run() {
             prepare_oauth_listener,
             wait_for_oauth_code,
             exchange_square_code,
+            refresh_square_token,
+            proxy_square_api,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application")

@@ -57,11 +57,11 @@ export function RevenueChart({ daily, weekly, monthly }: RevenueChartProps) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.23 0.006 55)" />
-          <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'oklch(0.47 0.008 65)' }} interval="preserveStartEnd" axisLine={{ stroke: 'oklch(0.23 0.006 55)' }} tickLine={false} />
-          <YAxis tickFormatter={shortCurrency} tick={{ fontSize: 11, fill: 'oklch(0.47 0.008 65)' }} width={48} axisLine={false} tickLine={false} />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} interval="preserveStartEnd" axisLine={{ stroke: 'oklch(0.23 0.006 55)' }} tickLine={false} />
+          <YAxis tickFormatter={shortCurrency} tick={{ fontSize: 11, fill: '#94a3b8' }} width={48} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{ background: 'oklch(0.17 0.007 55)', border: '1px solid oklch(0.26 0.006 55)', borderRadius: '4px', fontSize: '12px' }}
-            labelStyle={{ color: 'oklch(0.61 0.009 65)' }}
+            labelStyle={{ color: '#cbd5e1' }}
             itemStyle={{ color: 'oklch(0.73 0.22 252)' }}
             formatter={(v: number) => [`$${v.toFixed(2)}`, 'Revenue']}
           />

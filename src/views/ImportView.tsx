@@ -2,7 +2,7 @@ import { useState, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database'
 import { importCSVTransactions, importXLSXCatalogue, importShopifyCSV, importEtsyCSV, importOpexXLSX } from '../engine/importEngine'
-import { clearAllData } from '../db/dbUtils'
+import { clearAllData, exportAllData, restoreAllData } from '../db/dbUtils'
 import { useToastStore } from '../store/toastStore'
 import { formatNumber } from '../utils/format'
 
@@ -18,6 +18,7 @@ export default function ImportView() {
   const shopifyRef = useRef<HTMLInputElement>(null)
   const etsyRef = useRef<HTMLInputElement>(null)
   const opexRef = useRef<HTMLInputElement>(null)
+  const backupRef = useRef<HTMLInputElement>(null)
 
   async function handleCSV(file: File) {
     setImporting(true)
@@ -118,6 +119,37 @@ export default function ImportView() {
     if (file.name.endsWith('.csv')) handleCSV(file)
     else if (file.name.endsWith('.xlsx')) handleXLSX(file)
     else show('Unsupported file type. Use .csv or .xlsx', 'error')
+  }
+
+  async function handleExportBackup() {
+    try {
+      const json = await exportAllData()
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `walleys-backup-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      show('Backup downloaded', 'success')
+    } catch (e) {
+      show(`Backup failed: ${(e as Error).message}`, 'error')
+    }
+  }
+
+  async function handleRestoreBackup(file: File) {
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const result = await restoreAllData(text)
+      show(`Restored ${result.transactions} transactions · ${result.catalogue} catalogue products`, 'success')
+    } catch (e) {
+      show(`Restore failed: ${(e as Error).message}`, 'error')
+    } finally {
+      setImporting(false)
+    }
   }
 
   async function handleClearAll() {
@@ -223,6 +255,30 @@ export default function ImportView() {
         </button>
         <input ref={xlsxRef} type="file" accept=".xlsx" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleXLSX(f) }} />
+      </div>
+
+      {/* Data backup / restore */}
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-5">
+        <h2 className="font-semibold text-slate-200 mb-1">Data Backup</h2>
+        <p className="text-sm text-slate-400 mb-4">Export all your data to a backup file. Restore it after reinstalling or on a new machine.</p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleExportBackup}
+            className="px-4 py-2 bg-teal-500 text-slate-950 rounded-lg text-sm font-medium hover:bg-teal-600"
+          >
+            Export Backup (.json)
+          </button>
+          <button
+            onClick={() => backupRef.current?.click()}
+            disabled={importing}
+            className="px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-lg text-sm font-medium hover:bg-slate-600 disabled:opacity-50"
+          >
+            {importing ? 'Restoring…' : 'Restore from Backup'}
+          </button>
+          <input ref={backupRef} type="file" accept=".json" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleRestoreBackup(f); e.target.value = '' }} />
+        </div>
+        <p className="text-xs text-amber-400 mt-3">Restoring overwrites all current data. Export a backup first if you want to keep it.</p>
       </div>
 
       {(txCount > 0 || catCount > 0) && (
