@@ -1,7 +1,7 @@
 import { subDays } from 'date-fns'
 import { useAuthStore } from '../store/authStore'
 import { refreshAccessToken } from './squareAuth'
-import { fetchOrders, fetchCatalogue, fetchInventory } from './squareAPIClient'
+import { fetchOrders, fetchCatalogue, fetchInventory, fetchTeamMembers } from './squareAPIClient'
 import type { SquareOrder, SquareCatalogItem } from './squareAPIClient'
 import { upsertTransactions, upsertCatalogueProducts } from '../db/dbUtils'
 import type { SalesTransaction, CatalogueProduct } from '../types/models'
@@ -14,7 +14,7 @@ export interface SyncStatus {
   productsAdded: number
 }
 
-function orderToTransaction(order: SquareOrder): Omit<SalesTransaction, 'id'> | null {
+function orderToTransaction(order: SquareOrder, employeeMap: Record<string, string> = {}): Omit<SalesTransaction, 'id'> | null {
   // Prefer closed_at (when the order was finalized) over created_at for accurate date bucketing.
   // Square's own dashboard uses closed_at for daily totals on COMPLETED orders.
   const rawDate = order.closed_at ?? order.created_at
@@ -54,7 +54,7 @@ function orderToTransaction(order: SquareOrder): Omit<SalesTransaction, 'id'> | 
     transactionID: order.id,
     date,
     netSales,
-    staffName: order.employee_id ?? '',
+    staffName: order.employee_id ? (employeeMap[order.employee_id] ?? order.employee_id) : '',
     paymentMethod: payment,
     itemDescription: description,
     dayOfWeek: date.getDay() + 1,
@@ -121,6 +121,18 @@ export async function runSquareSync(
 
   const { accessToken, locationID, daysBack, lastSyncDate } = useAuthStore.getState()
 
+  // Resolve employee IDs → display names
+  const employeeMap: Record<string, string> = {}
+  try {
+    const members = await fetchTeamMembers(accessToken)
+    for (const m of members) {
+      const name = m.display_name ?? [m.given_name, m.family_name].filter(Boolean).join(' ')
+      if (name) employeeMap[m.id] = name
+    }
+  } catch {
+    // Team Members API is optional — sync continues without names if it fails
+  }
+
   onStatus({ phase: 'orders', message: 'Fetching orders...', ordersAdded: 0, productsAdded: 0 })
 
   const endDate = new Date()
@@ -130,7 +142,7 @@ export async function runSquareSync(
     : subDays(endDate, daysBack)
   const orders = await fetchOrders(accessToken, locationID, startDate, endDate)
   const txRows = orders.flatMap(o => {
-    const tx = orderToTransaction(o)
+    const tx = orderToTransaction(o, employeeMap)
     return tx ? [tx] : []
   })
   const ordersAdded = await upsertTransactions(txRows)

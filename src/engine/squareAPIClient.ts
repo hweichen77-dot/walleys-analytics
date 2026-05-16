@@ -169,6 +169,32 @@ export async function fetchCatalogue(token: string): Promise<SquareCatalogItem[]
   return items
 }
 
+export interface SquareTeamMember {
+  id: string
+  given_name?: string
+  family_name?: string
+  display_name?: string
+}
+
+export async function fetchTeamMembers(token: string): Promise<SquareTeamMember[]> {
+  const members: SquareTeamMember[] = []
+  let cursor: string | undefined
+
+  do {
+    const body: Record<string, unknown> = { limit: 200 }
+    if (cursor) body.cursor = cursor
+
+    const data = await squareRequest(token, 'POST', `${BASE}/team-members/search`, body) as {
+      team_members?: SquareTeamMember[]
+      cursor?: string
+    }
+    members.push(...(data.team_members ?? []))
+    cursor = data.cursor
+  } while (cursor)
+
+  return members
+}
+
 export async function fetchInventory(token: string, locationID: string): Promise<SquareInventoryCount[]> {
   const counts: SquareInventoryCount[] = []
   let cursor: string | undefined
