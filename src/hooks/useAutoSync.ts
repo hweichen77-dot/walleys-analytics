@@ -3,10 +3,13 @@ import { useAuthStore } from '../store/authStore'
 import { runSquareSync, isSyncInFlight } from '../engine/squareSyncEngine'
 import { useToastStore } from '../store/toastStore'
 
+const MIN_FOCUS_SYNC_GAP_MS = 15 * 60 * 1000 // 15 min minimum between focus-triggered syncs
+
 export function useAutoSync() {
-  const { autoSyncEnabled, syncIntervalMinutes, accessToken, locationID } = useAuthStore()
+  const { autoSyncEnabled, syncIntervalMinutes, accessToken, locationID, lastSyncDate } = useAuthStore()
   const { show } = useToastStore()
 
+  // Interval-based sync
   useEffect(() => {
     if (!autoSyncEnabled || !accessToken || !locationID) return
 
@@ -21,4 +24,22 @@ export function useAutoSync() {
 
     return () => clearInterval(id)
   }, [autoSyncEnabled, syncIntervalMinutes, accessToken, locationID, show])
+
+  // Focus-triggered sync: fires when the window regains focus if enough time has passed
+  useEffect(() => {
+    if (!autoSyncEnabled || !accessToken || !locationID) return
+
+    function onFocus() {
+      if (isSyncInFlight()) return
+      const lastMs = lastSyncDate ? new Date(lastSyncDate).getTime() : 0
+      if (Date.now() - lastMs < MIN_FOCUS_SYNC_GAP_MS) return
+      runSquareSync(() => {}).catch((e: unknown) => {
+        const msg = e instanceof Error ? e.message : 'Auto-sync failed'
+        show(`Square sync failed: ${msg}`, 'error')
+      })
+    }
+
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [autoSyncEnabled, accessToken, locationID, lastSyncDate, show])
 }

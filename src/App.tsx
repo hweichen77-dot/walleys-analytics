@@ -4,6 +4,7 @@ import Sidebar from './components/layout/Sidebar'
 import { DateRangePicker } from './components/layout/DateRangePicker'
 import { ToastContainer } from './components/ui/ToastContainer'
 import { ErrorBoundary } from './components/ui/ErrorBoundary'
+import { CommandPalette } from './components/ui/CommandPalette'
 import { useAutoSync } from './hooks/useAutoSync'
 
 const DashboardView         = lazy(() => import('./views/DashboardView'))
@@ -97,9 +98,22 @@ export default function App() {
   useDeepLinkHandler()
   useAutoSync()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setPaletteOpen(o => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
@@ -123,7 +137,20 @@ export default function App() {
             </button>
             <span className="font-display text-[13px] font-semibold text-slate-300 lg:hidden">Walley's Analytics</span>
           </div>
-          <DateRangePicker />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setPaletteOpen(true)}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-400 border border-slate-700 hover:border-slate-600 hover:text-slate-300 transition-colors bg-slate-900/50"
+              aria-label="Open command palette"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <span>Search products</span>
+              <kbd className="ml-1 text-[10px] border border-slate-700 px-1 py-0.5">⌘K</kbd>
+            </button>
+            <DateRangePicker />
+          </div>
         </div>
         <div className="p-4 lg:p-6">
           <ErrorBoundary>

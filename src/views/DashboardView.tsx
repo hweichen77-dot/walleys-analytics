@@ -18,7 +18,7 @@ import { RevenueChart } from '../components/charts/RevenueChart'
 import { CategoryBreakdownChart } from '../components/charts/CategoryBreakdownChart'
 import { TopProductsChart } from '../components/charts/TopProductsChart'
 import { formatCurrency, formatNumber } from '../utils/format'
-import { effectiveUnitCost } from '../types/models'
+import { lookupUnitCost } from '../types/models'
 import type { DateRange } from '../db/useTransactions'
 
 /** Shift a date range back by its own duration to get the preceding period. */
@@ -56,6 +56,9 @@ export default function DashboardView() {
   const daily = useMemo(() => computeDailyRevenue(transactions), [transactions])
   const weekly = useMemo(() => computeWeeklyRevenue(transactions), [transactions])
   const monthly = useMemo(() => computeMonthlyRevenue(transactions), [transactions])
+  const prevDaily = useMemo(() => computeDailyRevenue(prevTransactions), [prevTransactions])
+  const prevWeekly = useMemo(() => computeWeeklyRevenue(prevTransactions), [prevTransactions])
+  const prevMonthly = useMemo(() => computeMonthlyRevenue(prevTransactions), [prevTransactions])
   const categories = useMemo(() => computeCategoryRevenue(transactions, overrides), [transactions, overrides])
 
   const staffStats = useMemo(() => computeStaffStats(transactions), [transactions])
@@ -78,10 +81,9 @@ export default function DashboardView() {
 
   const { grossProfit, marginPct } = useMemo(() => {
     if (!costData.length) return { grossProfit: null, marginPct: null }
-    const costMap = new Map(costData.map(c => [c.productName, effectiveUnitCost(c)]))
     let cogs = 0
     for (const s of stats) {
-      const unitCost = costMap.get(s.name)
+      const unitCost = lookupUnitCost(s.name, costData)
       if (unitCost != null) cogs += unitCost * s.totalUnitsSold
     }
     const gp = totalRevenue - cogs
@@ -327,7 +329,10 @@ export default function DashboardView() {
         </div>
       )}
 
-      <RevenueChart daily={daily} weekly={weekly} monthly={monthly} />
+      <RevenueChart
+        daily={daily} weekly={weekly} monthly={monthly}
+        prevDaily={prevDaily} prevWeekly={prevWeekly} prevMonthly={prevMonthly}
+      />
 
       {insights && (
         <div className="border border-slate-700/50 bg-slate-800/25 px-5 py-4">

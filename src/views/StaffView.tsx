@@ -104,6 +104,52 @@ export default function StaffView() {
         </div>
       </div>
 
+      {/* Leaderboard */}
+      {staffStats.length > 0 && (
+        <div className="bg-slate-800/30 border border-slate-700/40 overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-700/50">
+            <h2 className="text-base font-semibold text-slate-100">Leaderboard</h2>
+          </div>
+          <div className="divide-y divide-slate-700/30">
+            {staffStats.map((s, i) => {
+              const avg = s.transactionCount > 0 ? s.totalSales / s.transactionCount : 0
+              const share = totalRevenue > 0 ? (s.totalSales / totalRevenue) * 100 : 0
+              const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
+              return (
+                <div key={s.name} className="flex items-center gap-4 px-5 py-3">
+                  <span className="w-6 text-center shrink-0">
+                    {medal ?? <span className="text-xs font-mono text-slate-500">{i + 1}</span>}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-100 truncate">{s.name}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="h-1 bg-slate-700/60 rounded-full w-24">
+                        <div className="h-1 bg-teal-500 rounded-full" style={{ width: `${share}%` }} />
+                      </div>
+                      <span className="text-[10px] text-slate-500">{share.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-8 shrink-0 text-right">
+                    <div>
+                      <p className="text-[10px] text-slate-400">Revenue</p>
+                      <p className="text-sm font-mono font-semibold text-slate-100">{formatCurrency(s.totalSales)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400">Transactions</p>
+                      <p className="text-sm font-mono text-slate-300">{formatNumber(s.transactionCount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400">Avg Sale</p>
+                      <p className="text-sm font-mono text-slate-400">{formatCurrency(avg)}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* ROI Table */}
       <div className="bg-slate-800/30 border border-slate-700/40 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
