@@ -1,3 +1,9 @@
+export interface TransactionLineItem {
+  name: string
+  qty: number
+  unitPrice: number  // gross unit price (base price × 1); used for proportional revenue allocation
+}
+
 export interface SalesTransaction {
   id?: number
   transactionID: string
@@ -10,6 +16,8 @@ export interface SalesTransaction {
   hour: number
   customerID?: string
   customerName?: string
+  // Per-line-item prices from Square sync — enables exact per-product revenue (not even-split)
+  lineItems?: TransactionLineItem[]
   // Square financial detail columns (populated when CSV has them)
   grossSales?: number
   discounts?: number

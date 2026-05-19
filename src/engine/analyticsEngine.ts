@@ -1,6 +1,36 @@
 import { startOfDay, startOfWeek, startOfMonth, format } from 'date-fns'
 import type { SalesTransaction } from '../types/models'
 import { parseProductItems } from '../types/models'
+
+/**
+ * Compute each item's share of tx.netSales.
+ * When tx.lineItems is present (Square-synced), allocates proportionally by gross price.
+ * This correctly distributes order-level discounts/tips instead of splitting evenly by qty.
+ * Falls back to even allocation by qty for CSV-imported transactions without line-item prices.
+ */
+function allocateRevenue(tx: SalesTransaction): Map<string, number> {
+  const result = new Map<string, number>()
+  const items = parseProductItems(tx.itemDescription)
+  if (items.length === 0) return result
+
+  if (tx.lineItems && tx.lineItems.length > 0) {
+    const totalGross = tx.lineItems.reduce((s, li) => s + li.unitPrice * li.qty, 0)
+    if (totalGross > 0) {
+      for (const li of tx.lineItems) {
+        result.set(li.name, (li.unitPrice * li.qty / totalGross) * tx.netSales)
+      }
+      return result
+    }
+  }
+
+  // Fallback: even allocation by qty
+  const totalQty = items.reduce((s, i) => s + i.qty, 0)
+  const perUnit = tx.netSales / Math.max(totalQty, 1)
+  for (const item of items) {
+    result.set(item.name, perUnit * item.qty)
+  }
+  return result
+}
 import { classifyProduct } from './categoryClassifier'
 
 export interface ProductStats {
@@ -103,14 +133,13 @@ export function computeProductStats(
 
   for (const tx of transactions) {
     const items = parseProductItems(tx.itemDescription).filter(i => isAnalyticsItem(i.name))
-    const totalQty = items.reduce((s, i) => s + i.qty, 0)
-    const revenuePerUnit = tx.netSales / Math.max(totalQty, 1)
+    const revenueMap = allocateRevenue(tx)
     const monthKey = format(tx.date, 'yyyy-MM')
     const dayKey = format(tx.date, 'yyyy-MM-dd')
 
     for (const item of items) {
       const existing = statsMap.get(item.name)
-      const itemRevenue = revenuePerUnit * item.qty
+      const itemRevenue = revenueMap.get(item.name) ?? 0
       if (existing) {
         existing.totalUnitsSold += item.qty
         existing.totalRevenue += itemRevenue
@@ -125,7 +154,7 @@ export function computeProductStats(
           category: classifyProduct(item.name, overrides),
           totalUnitsSold: item.qty,
           totalRevenue: itemRevenue,
-          avgPrice: revenuePerUnit,
+          avgPrice: item.qty > 0 ? itemRevenue / item.qty : 0,
           firstSoldDate: tx.date,
           lastSoldDate: tx.date,
           monthlySales: { [monthKey]: item.qty },
@@ -199,11 +228,10 @@ export function computeCategoryRevenue(
 
   for (const tx of transactions) {
     const items = parseProductItems(tx.itemDescription)
-    const totalQty = items.reduce((s, i) => s + i.qty, 0)
-    const revenuePerUnit = tx.netSales / Math.max(totalQty, 1)
+    const revenueMap = allocateRevenue(tx)
     for (const item of items) {
       const cat = classifyProduct(item.name, overrides)
-      catMap.set(cat, (catMap.get(cat) ?? 0) + revenuePerUnit * item.qty)
+      catMap.set(cat, (catMap.get(cat) ?? 0) + (revenueMap.get(item.name) ?? 0))
     }
   }
 
@@ -275,8 +303,7 @@ export function computeProductTimeSeries(
     const items = parseProductItems(tx.itemDescription)
     const item = items.find(i => i.name === productName)
     if (!item) continue
-    const totalQty = items.reduce((s, i) => s + i.qty, 0)
-    const itemRevenue = (tx.netSales / Math.max(totalQty, 1)) * item.qty
+    const itemRevenue = allocateRevenue(tx).get(productName) ?? 0
 
     let bucket: Date
     if (granularity === 'Daily') bucket = startOfDay(tx.date)
@@ -307,13 +334,12 @@ export function computeProductTransactions(
     const items = parseProductItems(tx.itemDescription)
     const item = items.find(i => i.name === productName)
     if (!item) continue
-    const totalQty = items.reduce((s, i) => s + i.qty, 0)
-    const revenuePerUnit = tx.netSales / Math.max(totalQty, 1)
+    const itemRevenue = allocateRevenue(tx).get(productName) ?? 0
     rows.push({
       date: tx.date,
       qty: item.qty,
-      unitPrice: revenuePerUnit,
-      total: revenuePerUnit * item.qty,
+      unitPrice: item.qty > 0 ? itemRevenue / item.qty : 0,
+      total: itemRevenue,
       staffName: tx.staffName.trim() || 'Unknown',
       paymentMethod: tx.paymentMethod,
     })

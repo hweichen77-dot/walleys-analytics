@@ -4,7 +4,7 @@ import { refreshAccessToken } from './squareAuth'
 import { fetchOrders, fetchCatalogue, fetchInventory, fetchTeamMembers, fetchCustomersByIds } from './squareAPIClient'
 import type { SquareOrder, SquareCatalogItem } from './squareAPIClient'
 import { upsertTransactions, upsertCatalogueProducts } from '../db/dbUtils'
-import type { SalesTransaction, CatalogueProduct } from '../types/models'
+import type { SalesTransaction, CatalogueProduct, TransactionLineItem } from '../types/models'
 import { parseProductItems, splitItemVariation } from '../types/models'
 
 export interface SyncStatus {
@@ -44,21 +44,30 @@ function orderToTransaction(order: SquareOrder, employeeMap: Record<string, stri
   }
   const netSales = amountCents / 100
 
-  const lineItems = order.line_items ?? []
-  const description = lineItems
-    .map(li => {
-      const qty = parseInt(li.quantity, 10) || 1
-      const varName = (li.variation_name ?? '').trim()
-      // Match Swift logic: only append variation if it exists and isn't "Regular"
-      const isDefault = !varName || varName.toLowerCase() === 'regular'
-      const fullName = isDefault ? li.name : `${li.name} (${varName})`
-      return `${qty} x ${fullName}`
-    })
-    .join(', ')
+  const rawLineItems = order.line_items ?? []
+  const lineItemPrices: TransactionLineItem[] = []
+  const descParts: string[] = []
 
+  for (const li of rawLineItems) {
+    const qty = parseInt(li.quantity, 10) || 1
+    const varName = (li.variation_name ?? '').trim()
+    const isDefault = !varName || varName.toLowerCase() === 'regular'
+    const fullName = isDefault ? li.name : `${li.name} (${varName})`
+    descParts.push(`${qty} x ${fullName}`)
+
+    // gross_sales_money = base_price * qty (before order-level discounts/tips).
+    // Used for proportional revenue allocation — distributes order-level discounts
+    // in proportion to each item's gross price rather than splitting evenly by qty.
+    const grossCents = li.gross_sales_money?.amount ?? li.base_price_money?.amount ?? null
+    if (grossCents != null) {
+      lineItemPrices.push({ name: fullName, qty, unitPrice: grossCents / qty / 100 })
+    }
+  }
+
+  const description = descParts.join(', ')
   const payment = order.tenders?.[0]?.type ?? 'UNKNOWN'
 
-  return {
+  const tx: Omit<SalesTransaction, 'id'> = {
     transactionID: order.id,
     date,
     netSales,
@@ -69,6 +78,8 @@ function orderToTransaction(order: SquareOrder, employeeMap: Record<string, stri
     dayOfWeek: date.getDay() + 1,
     hour: date.getHours(),
   }
+  if (lineItemPrices.length > 0) tx.lineItems = lineItemPrices
+  return tx
 }
 
 function catalogueToProduct(
